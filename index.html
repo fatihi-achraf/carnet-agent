@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Carnet Agent</title>
+<meta name="theme-color" content="#1d3fa3">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Carnet Agent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+/* Layout: one column phone ledger. Name card, entry form, pending list, then the send panel. Works offline. */
+:root{
+  --bg:#e9edf5; --surface:#ffffff; --surface-2:#f2f4fa; --ink:#111a36; --ink-2:#4b5675; --line:#d3daea;
+  --vente:#1d3fa3; --vente-bg:#e2e9fb; --charge:#b93a22; --charge-bg:#fbe5df;
+  --ok:#1b7a4c; --ok-bg:#ddf2e6; --warn:#8f5700; --warn-bg:#fcefd3;
+  --btn-vente:#1d3fa3; --btn-charge:#b93a22; --btn-regl:#1b7a4c; --on-btn:#ffffff; --focus:#1d3fa3;
+  --shadow:0 1px 0 rgba(17,26,54,.05),0 10px 24px -14px rgba(17,26,54,.28);
+  --f-display:'Archivo','Arial Narrow',system-ui,sans-serif;
+  --f-body:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0c1120; --surface:#141b30; --surface-2:#1a2340; --ink:#e9edf9; --ink-2:#a0abc9; --line:#28325a;
+    --vente:#9db8ff; --vente-bg:#1c2b5e; --charge:#ff9983; --charge-bg:#40201b;
+    --ok:#62d79f; --ok-bg:#12321f; --warn:#f4bd5c; --warn-bg:#3a2d0f;
+    --btn-vente:#3d63d6; --btn-charge:#d4492f; --btn-regl:#238a5a; --on-btn:#ffffff; --focus:#9db8ff; --shadow:none;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:14px 48px}
+.app{max-width:640px;margin-inline:auto;min-width:0;display:flex;flex-direction:column;gap:16px}
+h1,h2,h3,p{margin:0}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.top h1{font-family:var(--f-display);font-weight:800;font-stretch:118%;font-size:1.2rem}
+.who{display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--ink-2)}
+.who b{color:var(--ink)}
+.link{border:0;background:none;color:var(--vente);text-decoration:underline;padding:6px 4px;font-size:.85rem;min-height:32px}
+.notice{padding:10px 12px;border-radius:10px;background:var(--warn-bg);color:var(--warn);font-size:.88rem;font-weight:500}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:14px;min-width:0}
+.card h2{font-family:var(--f-display);font-weight:700;font-size:1rem}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;position:relative}
+.seg input,.modes input{position:absolute;opacity:0;pointer-events:none}
+.seg label{display:flex;align-items:center;justify-content:center;min-height:48px;border:1.5px solid var(--line);border-radius:10px;font-weight:600;background:var(--surface-2);color:var(--ink-2);cursor:pointer}
+#t-vente:checked+label{background:var(--vente-bg);border-color:var(--vente);color:var(--vente)}
+#t-charge:checked+label{background:var(--charge-bg);border-color:var(--charge);color:var(--charge)}
+#t-reglement:checked+label{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.seg input:focus-visible+label,.modes input:focus-visible+label{outline:2px solid var(--focus);outline-offset:2px}
+.group{display:flex;flex-direction:column;border:0;padding:0;margin:0;min-width:0}
+.group>legend,.field>span{padding:0;font-size:.72rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2)}
+.group>legend{margin-block-end:6px}
+.modes{display:flex;flex-wrap:wrap;gap:8px;position:relative}
+.modes label{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1.5px solid var(--line);border-radius:999px;font-weight:500;background:var(--surface-2);color:var(--ink-2);cursor:pointer}
+.modes input:checked+label{background:var(--ink);border-color:var(--ink);color:var(--bg);font-weight:600}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field input,.field textarea{width:100%;min-width:0;min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.money{position:relative}
+.money input{font-family:var(--f-mono);font-weight:600;font-size:1.9rem;min-height:64px;padding-right:58px;text-align:right}
+.money i{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-style:normal;font-family:var(--f-display);font-weight:700;color:var(--ink-2)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:6px 12px;font-size:.85rem;min-height:34px}
+.err{color:var(--charge);font-weight:500;font-size:.9rem}
+.primary{min-height:54px;border:0;border-radius:12px;background:var(--btn,var(--btn-vente));color:var(--on-btn);font-weight:600;font-size:1rem;padding-inline:20px}
+.primary:disabled{opacity:.5;cursor:not-allowed}
+form[data-type="vente"]{--btn:var(--btn-vente)}
+form[data-type="charge"]{--btn:var(--btn-charge)}
+form[data-type="reglement"]{--btn:var(--btn-regl)}
+.send{--btn:var(--ink)}
+.send .primary{color:var(--bg)}
+.ghost{display:inline-flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;color:inherit;min-height:50px;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;font-weight:600;padding-inline:16px}
+.strip{display:flex;flex-wrap:wrap;gap:6px 22px}
+.strip div{display:flex;flex-direction:column}
+.strip span{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);font-weight:600}
+.strip b{font-family:var(--f-mono);font-weight:600;font-size:1.05rem}
+.strip .v{color:var(--vente)} .strip .c{color:var(--charge)}
+.ops{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.op{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;padding:12px;border-top:1px solid var(--line)}
+.op:first-child{border-top:0}
+.lbl{font-weight:500;overflow-wrap:anywhere}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:.8rem;color:var(--ink-2)}
+.amt{font-family:var(--f-mono);font-weight:600;white-space:nowrap}
+.op.vente .amt{color:var(--vente)} .op.charge .amt{color:var(--charge)} .op.reglement .amt{color:var(--ok)}
+.tag{font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;font-weight:600;background:var(--vente-bg);border:1px solid var(--vente);color:var(--vente);border-radius:6px;padding:1px 6px}
+.tag.credit{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.tag.rg{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.csel{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:10px 12px;border:1.5px solid var(--ok);border-radius:10px;background:var(--ok-bg);color:var(--ok)}
+.csel b{color:var(--ink)}
+.cres{display:flex;flex-direction:column;gap:6px;margin-block-start:8px}
+.cres button{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:44px;padding:6px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);text-align:left}
+.cres button small{color:var(--ink-2);font-family:var(--f-mono);white-space:nowrap}
+.cres button.new{border-style:dashed;font-weight:600}
+.mini{border:0;background:none;padding:6px 8px;margin-block:-6px;margin-inline:-8px;color:var(--ink-2);text-decoration:underline;font-size:.8rem;min-height:32px}
+.mini.arm{color:var(--charge);font-weight:600}
+.empty{padding:20px 16px;border:1.5px dashed var(--line);border-radius:12px;color:var(--ink-2)}
+.empty strong{display:block;color:var(--ink);margin-block-end:4px}
+.hint{color:var(--ink-2);font-size:.85rem}
+.msgBox{width:100%;min-height:140px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-family:var(--f-mono);font-size:.78rem}
+.confirm{padding:12px;border-radius:12px;background:var(--surface-2);display:flex;flex-direction:column;gap:10px}
+.row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;align-items:center}
+.drawer{border-color:var(--ok)}
+.drawer h2{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.drawer h2 small{font-family:var(--f-body);font-weight:500;font-size:.75rem;color:var(--ink-2)}
+.drawer .big{font-family:var(--f-mono);font-weight:600;font-size:2.2rem;line-height:1.1}
+.drawer .big small{font-size:1rem;color:var(--ink-2)}
+.drawer .strip b.pos{color:var(--ok)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);max-width:min(92vw,520px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.9rem;font-weight:500;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:8}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion: reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <h1>Carnet Agent</h1>
+    <div class="who" id="who" hidden><span>Agent : <b id="whoName"></b></span><button class="link" id="renameBtn" type="button">Changer</button></div>
+  </header>
+  <p class="notice" id="storeWarn" hidden>Ce navigateur ne garde pas tes bons après fermeture. Envoie-les au responsable tout de suite après les avoir notés.</p>
+
+  <section class="card" id="installCard" hidden>
+    <h2>Installer l'application</h2>
+    <p class="hint" id="installText"></p>
+    <div class="row2">
+      <button class="primary" id="installBtn" type="button" hidden style="--btn:var(--vente)">Installer</button>
+      <button class="ghost" id="installHide" type="button">Plus tard</button>
+    </div>
+  </section>
+
+  <section class="card" id="nameCard" hidden>
+    <h2>Ton prénom</h2>
+    <p class="hint">Il apparaîtra sur chaque bon que tu envoies. Tu le saisis une seule fois.</p>
+    <label class="field"><span>Prénom</span><input id="nameInput" autocomplete="off" maxlength="40" placeholder="Ex : Karim"></label>
+    <p class="err" id="nameErr" role="alert" hidden></p>
+    <button class="primary" id="nameSave" type="button">Enregistrer</button>
+  </section>
+
+  <div id="main" hidden>
+    <section class="card drawer" id="drawerCard" hidden style="margin-block-end:16px">
+      <h2>Caisse en espèces <small id="drawerState"></small></h2>
+      <div class="big" id="drawerBig"></div>
+      <div class="strip" id="drawerStrip"></div>
+      <p class="hint" id="drawerNote"></p>
+    </section>
+    <form class="card" id="bonForm" data-type="vente" novalidate>
+      <div class="seg" role="radiogroup" aria-label="Type de bon">
+        <input type="radio" name="type" id="t-vente" value="vente" checked><label for="t-vente">Vente</label>
+        <input type="radio" name="type" id="t-charge" value="charge"><label for="t-charge">Charge</label>
+        <input type="radio" name="type" id="t-reglement" value="reglement"><label for="t-reglement">Règlement</label>
+      </div>
+      <fieldset class="group">
+        <legend>Mode de paiement</legend>
+        <div class="modes">
+          <input type="radio" name="mode" id="m-especes" value="especes" checked><label for="m-especes">Espèces</label>
+          <input type="radio" name="mode" id="m-virement" value="virement"><label for="m-virement">Virement</label>
+          <input type="radio" name="mode" id="m-carte" value="carte"><label for="m-carte">Carte</label>
+          <input type="radio" name="mode" id="m-cheque" value="cheque"><label for="m-cheque">Chèque</label>
+          <input type="radio" name="mode" id="m-credit" value="credit"><label for="m-credit" id="lbl-credit">Crédit</label>
+        </div>
+      </fieldset>
+      <div class="field" id="clientBox" hidden>
+        <span id="clientCap">Client</span>
+        <div class="csel" id="clientSel" hidden></div>
+        <div id="clientFind">
+          <input id="clientQ" autocomplete="off" placeholder="Cherche ou écris le nom du client" aria-label="Chercher un client">
+          <div class="cres" id="clientRes"></div>
+        </div>
+      </div>
+      <label class="field"><span>Montant</span>
+        <div class="money"><input id="amount" inputmode="decimal" autocomplete="off" placeholder="0,00" aria-describedby="formErr"><i>DH</i></div>
+      </label>
+      <label class="field"><span id="labelCap">Détail (facultatif)</span>
+        <input id="label" autocomplete="off" maxlength="120" placeholder="Ex : 2 pains, 1 lait">
+      </label>
+      <div class="chips" id="chips" hidden></div>
+      <label class="field"><span>Date du bon</span><input type="date" id="date"></label>
+      <p class="err" id="formErr" role="alert" hidden></p>
+      <button class="primary" id="saveBtn" type="submit">Enregistrer la vente</button>
+    </form>
+
+    <section class="card send" style="margin-block-start:16px" id="pendingCard">
+      <h2 id="pendingTitle">À envoyer au responsable</h2>
+      <div class="strip" id="strip"></div>
+      <div id="pendingBox"></div>
+      <button class="primary" id="sendBtn" type="button">Envoyer</button>
+      <p class="hint" id="sendHint"></p>
+      <div id="sendPanel" hidden>
+        <textarea class="msgBox" id="msgBox" readonly aria-label="Message à envoyer"></textarea>
+        <div class="row2" style="margin-block-start:10px">
+          <button class="ghost" id="copyBtn" type="button">Copier le message</button>
+          <a class="ghost" id="shareBtn" href="https://wa.me/212694140808" target="_blank" rel="noopener">Envoyer par WhatsApp</a>
+        </div>
+        <div class="confirm" style="margin-block-start:12px">
+          <p><b>Le message est bien parti ?</b> Les bons seront alors marqués comme envoyés.</p>
+          <div class="row2">
+            <button class="primary" id="sentYes" type="button" style="--btn:var(--ok);min-height:48px">Oui, c'est envoyé</button>
+            <button class="ghost" id="sentNo" type="button" style="min-height:48px">Pas encore</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-block-start:16px" id="clientsCard">
+      <details>
+        <summary id="clientsSum">Liste des clients</summary>
+        <div style="margin-block-start:12px;display:flex;flex-direction:column;gap:10px">
+          <p class="hint">Le responsable t’envoie la liste de ses clients (message avec une ligne « CLIENTS1: »). Colle-la ici pour mettre ta liste à jour. Pour vendre à crédit ou noter un règlement, tu choisis le client dans cette liste.</p>
+          <textarea class="msgBox" id="clientsText" aria-label="Message avec la liste des clients" placeholder="Carnet de Caisse · liste des clients&#10;…&#10;CLIENTS1:…"></textarea>
+          <p class="err" id="clientsErr" role="alert" hidden></p>
+          <button class="ghost" id="clientsGo" type="button">Mettre à jour la liste</button>
+        </div>
+      </details>
+    </section>
+
+    <section class="card" style="margin-block-start:16px" id="connCard">
+      <details id="connDet">
+        <summary id="connSum">Connexion Google Sheet</summary>
+        <div style="margin-block-start:12px;display:flex;flex-direction:column;gap:10px">
+          <div id="connOff" style="display:flex;flex-direction:column;gap:10px">
+            <p class="hint">Le responsable t’envoie un lien ou un code « CONN1: ». Colle-le ici : tes bons partent alors tout seuls et tu vois l’argent qui est dans le tiroir.</p>
+            <textarea class="msgBox" id="connText" aria-label="Code de connexion" placeholder="CONN1:…" style="min-height:80px"></textarea>
+            <p class="err" id="connErr" role="alert" hidden></p>
+            <button class="ghost" id="connGo" type="button">Connecter</button>
+          </div>
+          <div id="connOn" hidden style="display:flex;flex-direction:column;gap:10px">
+            <p class="hint" id="connInfo"></p>
+            <button class="ghost" id="connStop" type="button">Se déconnecter</button>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <section class="card" style="margin-block-start:16px" id="sentCard" hidden>
+      <details>
+        <summary id="sentSum">Déjà envoyés</summary>
+        <div id="sentBox" style="margin-block-start:12px"></div>
+      </details>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)};
+var KEY='carnet-agent-v1';
+var MONTHS=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+var MODES={especes:'Espèces',virement:'Virement',carte:'Carte',cheque:'Chèque',credit:'Crédit'};
+var CHIPS=['Fournisseur','Électricité / eau','Transport','Salaire','Loyer'];
+var data={agent:'',ops:[],clients:{},listAt:0,conn:null,view:null},canStore=true,armed=null,armT=null,toastT=null,snapshot=null,formClient=null;
+
+function load(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(raw){var p=JSON.parse(raw);if(p&&Array.isArray(p.ops)){data={agent:String(p.agent||''),ops:p.ops,clients:(p.clients&&typeof p.clients==='object')?p.clients:{},listAt:Number(p.listAt)||0,conn:(p.conn&&p.conn.u&&p.conn.k)?{u:String(p.conn.u),k:String(p.conn.k)}:null,view:(p.view&&typeof p.view==='object')?p.view:null}}}
+    localStorage.setItem(KEY+'-probe','1');localStorage.removeItem(KEY+'-probe');
+  }catch(e){canStore=false}
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){canStore=false;$('storeWarn').hidden=false}}
+function pad(n){return String(n).padStart(2,'0')}
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function dLabel(s){var p=s.split('-').map(Number);return p[2]+' '+MONTHS[p[1]-1]}
+var nf=new Intl.NumberFormat('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
+function fmt(c){return nf.format(Math.abs(c)/100)}
+function parseMoney(str){
+  var s=String(str==null?'':str).replace(/[\s  ]/g,'').replace(',','.');
+  if(s===''||s==='.'||!/^\d*\.?\d*$/.test(s))return null;
+  var n=Number(s);return isFinite(n)?Math.round(n*100):null;
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]})}
+/* clients : même règle que l'application principale (sans accents, sans majuscules, sans ponctuation) */
+function cleanName(s){return String(s==null?'':s).replace(/\s+/g,' ').trim().slice(0,60)}
+function nameKey(s){return cleanName(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim()}
+function hash36(s){var h=0x811c9dc5,i;for(i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h.toString(36)}
+function clientId(name){var k=nameKey(name);if(!k)return '';var slug=k.replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,20);return 'c-'+(slug||'x')+'-'+hash36(k)}
+function b64d(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';var bin=atob(s),bytes=new Uint8Array(bin.length),i;for(i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new TextDecoder().decode(bytes)}
+function clientsSorted(){return Object.keys(data.clients).map(function(k){return Object.assign({id:k},data.clients[k])}).filter(function(c){return c.name}).sort(function(a,b){return a.name.localeCompare(b.name,'fr')})}
+function typeLabel(t){return t==='vente'?'Vente':(t==='reglement'?'Règlement':'Charge')}
+function newId(){return 'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show')},2600)}
+
+function b64e(str){
+  var bytes=new TextEncoder().encode(str),bin='',i;
+  for(i=0;i<bytes.length;i++)bin+=String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function buildMessage(ops){
+  var lines=['Carnet de Caisse · '+data.agent+' · '+ops.length+' bon'+(ops.length>1?'s':'')];
+  ops.forEach(function(o){
+    lines.push(dLabel(o.d)+' · '+typeLabel(o.t)+' · '+fmt(o.c)+' DH · '+MODES[o.m]+(o.n?' · '+o.n:'')+(o.l?' · '+o.l:''));
+  });
+  lines.push('');
+  for(var i=0;i<ops.length;i+=40){
+    var chunk=ops.slice(i,i+40).map(function(o){var x={i:o.i,t:o.t,m:o.m,c:o.c,l:o.l,d:o.d,s:o.s};if(o.n)x.n=o.n;return x});
+    lines.push('CARNET1:'+b64e(JSON.stringify({v:1,a:data.agent,o:chunk})));
+  }
+  return lines.join('\n');
+}
+
+function pending(){return data.ops.filter(function(o){return !o.sent}).sort(function(a,b){return a.s-b.s})}
+function sentOps(){return data.ops.filter(function(o){return o.sent}).sort(function(a,b){return b.s-a.s})}
+function rowHtml(o,canDel){
+  var isV=o.t==='vente',isR=o.t==='reglement',t=new Date(o.s);
+  var act=canDel?'<button type="button" class="mini'+(armed===o.i?' arm':'')+'" data-del="'+esc(o.i)+'">'+(armed===o.i?'Confirmer la suppression ?':'Supprimer')+'</button>':'';
+  var lbl=o.n?'<b>'+esc(o.n)+'</b>'+(o.l?' · '+esc(o.l):''):(esc(o.l)||typeLabel(o.t));
+  var tag=o.m==='credit'?'<span class="tag credit">Crédit</span>':((o.m!=='especes'||isR)?'<span class="tag'+(isR?' rg':'')+'">'+MODES[o.m]+'</span>':'');
+  return '<li class="op '+(isR?'reglement':(isV?'vente':'charge'))+'"><div><div class="lbl">'+lbl+'</div><div class="meta"><span>'+dLabel(o.d)+' · '+pad(t.getHours())+':'+pad(t.getMinutes())+' · '+typeLabel(o.t)+'</span>'+tag+act+'</div></div><div class="amt">'+(isV||isR?'+':'−')+fmt(o.c)+'</div></li>';
+}
+/* ---- Google Sheet : connexion, synchro, caisse en espèces ---- */
+var syncing=false,syncErr='',syncT=null;
+function connected(){return !!(data.conn&&data.conn.u&&data.conn.k)}
+function apiWith(conn,action,payload){
+  var ctl=(typeof AbortController!=='undefined')?new AbortController():null,to=ctl?setTimeout(function(){ctl.abort()},20000):null;
+  return fetch(conn.u,{method:'POST',body:JSON.stringify(Object.assign({action:action,key:conn.k},payload||{})),signal:ctl?ctl.signal:undefined})
+    .then(function(r){return r.json()},function(){var e=new Error('network');e.code='network';throw e})
+    .then(function(j){
+      if(to)clearTimeout(to);
+      if(!j||!j.ok){var e=new Error((j&&j.message)||'server');e.code=(j&&j.error)||'server';throw e}
+      return j;
+    },function(e){if(to)clearTimeout(to);throw e});
+}
+function addDaysStr(s,n){var p=s.split('-').map(Number),d=new Date(Date.UTC(p[0],p[1]-1,p[2]+n));return d.toISOString().slice(0,10)}
+function hhmm(t){var d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes())}
+function toServerOp(o){
+  var x={id:o.i,type:o.t,mode:o.m,cents:o.c,label:o.l||'',date:o.d,ts:o.s,agent:data.agent};
+  if(o.n){x.client=clientId(o.n);x.clientName=o.n}
+  return x;
+}
+function applyView(v){
+  var next={},keep={};
+  (Array.isArray(v.clients)?v.clients:[]).forEach(function(x){
+    if(!Array.isArray(x)||typeof x[0]!=='string')return;
+    var n=cleanName(x[0]),id=clientId(n);
+    if(n.length<2||!id)return;
+    next[id]={name:n,due:(Number.isInteger(x[1])&&x[1]>0)?x[1]:0};
+  });
+  pending().forEach(function(o){if(o.n)keep[clientId(o.n)]=1});
+  Object.keys(data.clients).forEach(function(id){if(data.clients[id].local&&keep[id]&&!next[id])next[id]=data.clients[id]});
+  data.clients=next;data.listAt=Date.now();
+  var w=Object.assign({},v);delete w.clients;w.got=Date.now();data.view=w;
+}
+function syncNow(manual){
+  if(!connected()||syncing||!data.agent)return Promise.resolve();
+  var conn=data.conn,p=pending(),ids={};
+  p.forEach(function(o){ids[o.i]=1});
+  syncing=true;syncErr='';render();
+  var bad=0;
+  var first=p.length?apiWith(conn,'addOps',{ops:p.map(toServerOp)}).then(function(r){
+    var now=Date.now();bad=r.bad||0;
+    data.ops.forEach(function(o){if(ids[o.i]){o.sent=true;o.sa=now}});save();
+  }):Promise.resolve();
+  return first.then(function(){return apiWith(conn,'agentView')}).then(function(v){applyView(v)})
+    .catch(function(e){
+      syncErr=e.code==='auth'?'Code de connexion refusé. Demande un nouveau code au responsable.':(e.code==='network'?'Pas de connexion : tes bons restent sur ce téléphone et partiront plus tard.':'Erreur : '+(e.message||'serveur'));
+    })
+    .then(function(){
+      syncing=false;save();render();
+      if(bad)toast(bad+' bon'+(bad>1?'s':'')+' refusé'+(bad>1?'s':'')+' par le serveur');
+      else if(manual)toast(syncErr?'Synchro impossible':'Synchronisé');
+    });
+}
+function queueSync(){clearTimeout(syncT);syncT=setTimeout(function(){syncNow(false)},400)}
+function drawerFigures(){
+  var v=data.view;if(!v||!v.week)return null;
+  var ws=v.week,we=addDaysStr(ws,6),vE=v.vEsp||0,rE=v.rgEsp||0,cE=v.cEsp||0,n=0;
+  data.ops.forEach(function(o){
+    if(o.m!=='especes'||o.d<ws||o.d>we)return;
+    if(o.sent&&!(o.sa&&o.sa>v.got))return;
+    n++;
+    if(o.t==='vente')vE+=o.c;else if(o.t==='reglement')rE+=o.c;else cE+=o.c;
+  });
+  var fond=v.fondKnown?(v.fond||0):0;
+  return {ws:ws,fondKnown:!!v.fondKnown,fond:fond,v:vE,r:rE,c:cE,total:fond+vE+rE-cE,n:n,closed:!!v.closed,got:v.got};
+}
+function renderDrawer(){
+  var card=$('drawerCard'),on=connected();
+  card.hidden=false;
+  if(!on){
+    $('drawerState').textContent='non connecté';
+    $('drawerBig').innerHTML='— <small>DH</small>';
+    $('drawerStrip').innerHTML='';
+    $('drawerNote').innerHTML='Pour voir l’argent qui est dans le tiroir, connecte l’application au Google Sheet du responsable. <button type="button" class="link" id="drawerConn">Se connecter</button>';
+    return;
+  }
+  var f=drawerFigures();
+  $('drawerState').textContent=syncing?'mise à jour…':(syncErr?'hors ligne · chiffres de '+(data.view?hhmm(data.view.got):'—'):(data.view?'à jour · '+hhmm(data.view.got):''));
+  if(!f){$('drawerBig').innerHTML='—';$('drawerStrip').innerHTML='';$('drawerNote').textContent=syncing?'Chargement…':'Pas encore de chiffres. Connecte-toi à internet puis appuie sur « Actualiser la caisse ».';return}
+  $('drawerBig').innerHTML=fmt(f.total)+' <small>DH</small>';
+  $('drawerStrip').innerHTML='<div><span>Fond</span><b>'+(f.fondKnown?fmt(f.fond):'?')+'</b></div><div><span>Ventes esp.</span><b class="v">+'+fmt(f.v)+'</b></div><div><span>Règlements esp.</span><b class="pos">+'+fmt(f.r)+'</b></div><div><span>Charges esp.</span><b class="c">−'+fmt(f.c)+'</b></div>';
+  var note='Argent que le tiroir doit contenir (semaine du '+dLabel(f.ws)+').';
+  if(!f.fondKnown)note='Le fond de caisse n’est pas encore connu (la semaine précédente n’est pas clôturée) : ce total ne compte que les mouvements de la semaine, sans le fond.';
+  if(f.n)note+=' Inclut '+f.n+' bon'+(f.n>1?'s':'')+' espèces pas encore envoyé'+(f.n>1?'s':'')+'.';
+  $('drawerNote').textContent=note;
+}
+function renderConn(){
+  var on=connected();
+  $('connOff').hidden=on;$('connOn').hidden=!on;
+  $('connSum').textContent=on?'Connecté au Google Sheet':'Connexion Google Sheet';
+  $('connInfo').textContent=on?'Tes bons sont envoyés automatiquement au responsable et la caisse se met à jour. Si tu te déconnectes, les bons déjà notés restent ici.':'';
+}
+function parseConn(text){
+  var m=/CONN1:([A-Za-z0-9_-]+)/.exec(String(text||''));
+  if(!m)return null;
+  try{var o=JSON.parse(b64d(m[1]));if(o&&typeof o.u==='string'&&/^(https:\/\/|http:\/\/localhost[:\/])/.test(o.u)&&typeof o.k==='string'&&o.k)return {u:o.u,k:o.k}}catch(e){}
+  return null;
+}
+function connectWith(text,done){
+  var c=parseConn(text);
+  if(!c){done('Code non reconnu. Colle le lien ou le code « CONN1: » complet.');return}
+  apiWith(c,'ping').then(function(r){
+    if(r.role!=='agent'){done('Ce code n’est pas un code agent. Demande le code agent au responsable.');return}
+    data.conn=c;save();done('');render();syncNow(true);
+  },function(e){done(e.code==='auth'?'Ce code est refusé.':'Impossible de joindre le Google Sheet. Vérifie internet.')});
+}
+
+function render(){
+  var hasName=!!data.agent;
+  $('nameCard').hidden=hasName;$('main').hidden=!hasName;$('who').hidden=!hasName;
+  $('whoName').textContent=data.agent;
+  $('storeWarn').hidden=canStore;
+  if(!hasName)return;
+  var p=pending(),v=0,c=0,rg=0;
+  p.forEach(function(o){if(o.t==='vente')v+=o.c;else if(o.t==='reglement')rg+=o.c;else c+=o.c});
+  $('strip').innerHTML='<div><span>Ventes</span><b class="v">'+fmt(v)+'</b></div><div><span>Charges</span><b class="c">'+fmt(c)+'</b></div>'+(rg?'<div><span>Règlements</span><b>'+fmt(rg)+'</b></div>':'')+'<div><span>Bons</span><b>'+p.length+'</b></div>';
+  $('clientsSum').textContent='Liste des clients ('+clientsSorted().length+')'+(data.listAt?' · mise à jour le '+dLabel(new Date(data.listAt).toISOString().slice(0,10)):'');
+  renderClientPicker();
+  $('pendingBox').innerHTML=p.length?'<ul class="ops">'+p.slice().reverse().map(function(o){return rowHtml(o,true)}).join('')+'</ul>':'<div class="empty"><strong>Aucun bon à envoyer.</strong>Note une vente ou une charge ci-dessus. Elle reste sur ce téléphone jusqu’à l’envoi.</div>';
+  var on=connected();
+  $('sendBtn').disabled=on?syncing:!p.length;
+  if(on){
+    $('pendingTitle').textContent=p.length?'Pas encore envoyés':'Tout est envoyé';
+    $('sendBtn').textContent=syncing?'Synchronisation…':(p.length?'Envoyer '+p.length+' bon'+(p.length>1?'s':'')+' maintenant':'Actualiser la caisse');
+    $('sendHint').textContent=syncErr||(p.length?'Les bons partent automatiquement dès que le téléphone a internet.':'');
+  }else{
+    $('pendingTitle').textContent='À envoyer au responsable';
+    $('sendBtn').textContent=p.length?'Envoyer '+p.length+' bon'+(p.length>1?'s':'')+' au responsable':'Envoyer';
+    $('sendHint').textContent=p.length?'Tu pourras choisir WhatsApp ou copier le message. Le responsable le colle dans l’application.':'';
+  }
+  $('clientsCard').hidden=on;
+  renderDrawer();renderConn();
+  var s=sentOps();
+  $('sentCard').hidden=!s.length;
+  $('sentSum').textContent='Déjà envoyés ('+s.length+')';
+  $('sentBox').innerHTML=s.length?'<ul class="ops">'+s.slice(0,60).map(function(o){return rowHtml(o,false)}).join('')+'</ul>':'';
+}
+function needsClient(){
+  var type=document.querySelector('input[name=type]:checked').value,mode=document.querySelector('input[name=mode]:checked').value;
+  return type==='reglement'||(type==='vente'&&mode==='credit');
+}
+function renderClientPicker(){
+  var need=needsClient(),box=$('clientBox');
+  box.hidden=!need;
+  if(!need){formClient=null;return}
+  var isR=document.querySelector('input[name=type]:checked').value==='reglement';
+  $('clientCap').textContent=isR?'Client qui règle (obligatoire)':'Client à crédit (obligatoire)';
+  var sb=$('clientSel'),fd=$('clientFind');
+  if(formClient&&data.clients[formClient]){
+    var c=data.clients[formClient];
+    sb.hidden=false;fd.hidden=true;
+    sb.innerHTML='<b>'+esc(c.name)+'</b>'+(c.due>0?'<span>doit '+fmt(c.due)+' DH (liste)</span>':'')+'<button type="button" class="mini" data-act="clientChange">Changer</button>';
+    return;
+  }
+  formClient=null;sb.hidden=true;fd.hidden=false;
+  var q=$('clientQ').value,qk=nameKey(q),all=clientsSorted(),html='';
+  var matches=all.filter(function(c){return !qk||nameKey(c.name).indexOf(qk)>=0}).slice(0,6);
+  matches.forEach(function(c){html+='<button type="button" data-cid="'+esc(c.id)+'"><span>'+esc(c.name)+'</span><small>'+(c.due>0?'doit '+fmt(c.due):'')+'</small></button>'});
+  var exact=qk&&all.some(function(c){return nameKey(c.name)===qk});
+  if(qk&&!exact&&!isR)html+='<button type="button" class="new" data-new="1">＋ Nouveau client « '+esc(cleanName(q))+' »</button>';
+  if(qk&&!matches.length&&isR)html+='<p class="hint">Aucun client de ce nom dans ta liste. Demande au responsable de te renvoyer la liste à jour.</p>';
+  if(!qk&&!matches.length)html+='<p class="hint">Ta liste est vide. Colle la liste du responsable (en bas), ou écris un nom pour créer un client.</p>';
+  $('clientRes').innerHTML=html;
+}
+function refreshForm(){
+  var type=document.querySelector('input[name=type]:checked').value;
+  var mode=document.querySelector('input[name=mode]:checked').value;
+  var credOk=type==='vente';
+  $('m-credit').hidden=!credOk;$('lbl-credit').hidden=!credOk;
+  if(!credOk&&mode==='credit'){$('m-especes').checked=true;mode='especes'}
+  $('bonForm').dataset.type=type;
+  $('saveBtn').textContent=type==='vente'?(mode==='credit'?'Enregistrer la vente à crédit':'Enregistrer la vente'):(type==='reglement'?'Enregistrer le règlement':'Enregistrer la charge');
+  $('chips').hidden=type!=='charge';
+  var need=type==='charge'||(type==='vente'&&mode!=='especes'&&mode!=='credit');
+  $('labelCap').textContent=type==='charge'?'Détail de la charge (obligatoire)':(type==='reglement'?'Note (facultatif)':(need?'Client ou référence (obligatoire)':'Détail (facultatif)'));
+  $('label').placeholder=type==='charge'?'Ex : fournisseur, facture électricité':(type==='reglement'?'Ex : reste à payer le mois prochain':(need?'Ex : Mme Alaoui, virement du 11/10':'Ex : 2 pains, 1 lait'));
+  renderClientPicker();
+}
+function closeSendPanel(){$('sendPanel').hidden=true;snapshot=null}
+
+
+/* ---------- installation (écran d'accueil) ---------- */
+var deferredInstall=null;
+function isStandalone(){return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true}
+function hideInstall(remember){
+  $('installCard').hidden=true;
+  if(remember){try{localStorage.setItem(KEY+'-hideinstall','1')}catch(e){}}
+}
+function setupInstall(){
+  var hidden=false;
+  try{hidden=localStorage.getItem(KEY+'-hideinstall')==='1'}catch(e){}
+  if(isStandalone()||hidden||location.protocol==='file:')return;
+  var ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  var txt=$('installText');
+  if(ios){
+    txt.textContent='Dans Safari, touche le bouton Partager, puis « Sur l\u2019écran d\u2019accueil ». Ouvre ensuite Carnet Agent depuis son icône et note tes bons à partir de là. Les bons notés avant l\u2019installation restent dans Safari.';
+  }else{
+    txt.textContent='Ouvre le menu du navigateur (trois points), puis « Installer l\u2019application » ou « Ajouter à l\u2019écran d\u2019accueil ». Ouvre ensuite Carnet Agent depuis son icône.';
+  }
+  $('installCard').hidden=false;
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault();deferredInstall=e;
+    txt.textContent='Installe Carnet Agent sur ton téléphone pour l\u2019ouvrir d\u2019un toucher, même sans internet.';
+    $('installBtn').hidden=false;
+  });
+  window.addEventListener('appinstalled',function(){hideInstall(true);toast('Application installée')});
+  $('installBtn').addEventListener('click',function(){
+    if(!deferredInstall)return;
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(function(){deferredInstall=null;$('installBtn').hidden=true},function(){});
+  });
+  $('installHide').addEventListener('click',function(){hideInstall(true)});
+}
+if('serviceWorker' in navigator&&location.protocol!=='file:'){
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+}
+
+function init(){
+  load();
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(function(){})}catch(e){}
+  setupInstall();
+  $('date').max=todayStr();$('date').value=todayStr();
+  CHIPS.forEach(function(t){
+    var b=document.createElement('button');b.type='button';b.className='chip';b.textContent=t;
+    b.addEventListener('click',function(){$('label').value=t;(!$('amount').value?$('amount'):$('label')).focus()});
+    $('chips').appendChild(b);
+  });
+  document.querySelectorAll('input[name=type],input[name=mode]').forEach(function(r){r.addEventListener('change',refreshForm)});
+
+  function saveName(){
+    var n=$('nameInput').value.replace(/\s+/g,' ').trim();
+    if(!n){$('nameErr').textContent='Écris ton prénom.';$('nameErr').hidden=false;$('nameInput').focus();return}
+    data.agent=n.slice(0,40);save();render();queueSync();
+  }
+  $('nameSave').addEventListener('click',saveName);
+  $('nameInput').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();saveName()}});
+  $('renameBtn').addEventListener('click',function(){
+    $('nameInput').value=data.agent;data.agent='';render();$('nameInput').focus();
+  });
+
+  $('bonForm').addEventListener('submit',function(e){
+    e.preventDefault();
+    var type=document.querySelector('input[name=type]:checked').value;
+    var mode=document.querySelector('input[name=mode]:checked').value;
+    var cents=parseMoney($('amount').value),label=$('label').value.trim(),date=$('date').value,er=$('formErr');
+    function err(m,el){er.textContent=m;er.hidden=false;if(el)el.focus()}
+    er.hidden=true;
+    if(cents==null||cents<=0){err('Écris un montant, par exemple 120 ou 45,50.',$('amount'));return}
+    if(cents>1000000000){err('Ce montant est trop grand. Vérifie les chiffres.',$('amount'));return}
+    if(type==='charge'&&!label){err('Précise la charge : fournisseur, électricité, transport…',$('label'));return}
+    if(type==='vente'&&mode!=='especes'&&mode!=='credit'&&!label){err('Écris le nom du client ou la référence, pour retrouver ce paiement plus tard.',$('label'));return}
+    var cl=null;
+    if(needsClient()){
+      cl=formClient&&data.clients[formClient];
+      if(!cl){err('Choisis le client dans la liste, ou crée-le. Le nom doit être écrit une seule fois pour que son crédit soit bien suivi.',$('clientQ'));return}
+    }
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>todayStr()){err('Choisis une date valide, pas dans le futur.',$('date'));return}
+    var nop={i:newId(),t:type,m:mode,c:cents,l:label.slice(0,120),d:date,s:Date.now(),sent:false};
+    if(cl)nop.n=cl.name;
+    data.ops.push(nop);
+    save();closeSendPanel();
+    $('amount').value='';$('label').value='';formClient=null;$('clientQ').value='';
+    toast(typeLabel(type)+' noté'+(type==='charge'||type==='vente'?'e':'')+' : '+fmt(cents)+' DH · '+MODES[mode]+(cl?' · '+cl.name:''));
+    render();queueSync();$('amount').focus();
+  });
+
+  $('pendingBox').addEventListener('click',function(e){
+    var b=e.target.closest('[data-del]');
+    if(!b)return;
+    var id=b.dataset.del;
+    if(armed!==id){armed=id;clearTimeout(armT);armT=setTimeout(function(){armed=null;render()},3500);render();return}
+    armed=null;clearTimeout(armT);
+    data.ops=data.ops.filter(function(o){return o.i!==id});
+    save();closeSendPanel();toast('Bon supprimé');render();queueSync();
+  });
+
+  $('sendBtn').addEventListener('click',function(){
+    if(connected()){syncNow(true);return}
+    var p=pending();
+    if(!p.length)return;
+    snapshot=p.map(function(o){return o.i});
+    var msg=buildMessage(p);
+    $('msgBox').value=msg;
+    $('sendPanel').hidden=false;
+    $('sendPanel').scrollIntoView({block:'nearest'});
+  });
+  $('copyBtn').addEventListener('click',function(){
+    var ta=$('msgBox'),txt=ta.value;
+    function fb(){ta.focus();ta.select();toast('Sélectionne le texte puis copie-le')}
+    try{navigator.clipboard.writeText(txt).then(function(){toast('Message copié. Colle-le dans WhatsApp.')},fb)}catch(e){fb()}
+  });
+  /* Envoi direct au numéro du responsable. Un vrai lien est moins souvent bloqué qu'un window.open. */
+  var WA_NUMBER='212694140808';
+  $('shareBtn').addEventListener('click',function(e){
+    var text=$('msgBox').value;
+    try{navigator.clipboard.writeText(text).catch(function(){})}catch(x){}
+    if(text.length<=3000){
+      this.href='https://wa.me/'+WA_NUMBER+'?text='+encodeURIComponent(text);
+      toast('WhatsApp s’ouvre sur le responsable. Si le message est vide, colle-le : il est déjà copié.');
+    }else{
+      this.href='https://wa.me/'+WA_NUMBER;
+      toast('Message long : il est copié. Colle-le dans la conversation WhatsApp.');
+    }
+  });
+  $('sentYes').addEventListener('click',function(){
+    if(!snapshot)return;
+    var ids={};snapshot.forEach(function(i){ids[i]=1});
+    data.ops.forEach(function(o){if(ids[o.i])o.sent=true});
+    save();closeSendPanel();toast('Bons marqués comme envoyés');render();
+  });
+  $('sentNo').addEventListener('click',closeSendPanel);
+
+  $('clientQ').addEventListener('input',renderClientPicker);
+  $('clientRes').addEventListener('click',function(e){
+    var b=e.target.closest('button');
+    if(!b)return;
+    if(b.dataset.cid){formClient=b.dataset.cid;$('clientQ').value='';renderClientPicker()}
+    else if(b.dataset.new){
+      var name=cleanName($('clientQ').value),id=clientId(name);
+      if(name.length<2||!id){toast('Écris le nom du client (2 lettres au minimum).');return}
+      if(!data.clients[id])data.clients[id]={name:name,due:0,local:true};
+      save();formClient=id;$('clientQ').value='';toast('Client ajouté : '+name);render();
+    }
+  });
+  $('clientBox').addEventListener('click',function(e){
+    if(e.target.closest('[data-act="clientChange"]')){formClient=null;renderClientPicker();$('clientQ').focus()}
+  });
+  $('clientsGo').addEventListener('click',function(){
+    var er=$('clientsErr');er.hidden=true;
+    var m=/CLIENTS1:([A-Za-z0-9_-]+)/.exec($('clientsText').value),p=null;
+    function bad(t){er.textContent=t;er.hidden=false}
+    if(!m){bad('Je ne trouve pas de code « CLIENTS1: ». Colle le message complet du responsable.');return}
+    try{p=JSON.parse(b64d(m[1]))}catch(e){p=null}
+    if(!p||p.v!==1||!Array.isArray(p.c)){bad('Ce code n’est pas valide. Demande au responsable de te le renvoyer.');return}
+    var next={};
+    p.c.slice(0,500).forEach(function(x){
+      if(!Array.isArray(x)||typeof x[0]!=='string')return;
+      var n=cleanName(x[0]),id=clientId(n);
+      if(n.length<2||!id)return;
+      next[id]={name:n,due:(Number.isInteger(x[1])&&x[1]>0)?x[1]:0};
+    });
+    var kept=0;
+    Object.keys(data.clients).forEach(function(id){if(data.clients[id].local&&!next[id]){next[id]=data.clients[id];kept++}});
+    data.clients=next;data.listAt=(typeof p.t==='number'&&isFinite(p.t))?p.t:Date.now();
+    save();formClient=null;$('clientsText').value='';
+    toast(Object.keys(next).length+' clients dans ta liste');render();
+  });
+
+  $('connGo').addEventListener('click',function(){
+    var er=$('connErr');er.hidden=true;
+    $('connGo').disabled=true;
+    connectWith($('connText').value,function(msg){
+      $('connGo').disabled=false;
+      if(msg){er.textContent=msg;er.hidden=false}else{$('connText').value=''}
+    });
+  });
+  $('drawerNote').addEventListener('click',function(e){if(e.target.id==='drawerConn'){$('connDet').open=true;$('connDet').scrollIntoView({block:'center'});$('connText').focus()}});
+  $('connStop').addEventListener('click',function(){data.conn=null;data.view=null;syncErr='';save();toast('Déconnecté');render()});
+  window.addEventListener('online',function(){syncNow(false)});
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)syncNow(false)});
+  setInterval(function(){if(!document.hidden)syncNow(false)},30000);
+
+  var hm=/[#&]c=([^&]+)/.exec(location.hash||'');
+  if(hm){
+    var code=decodeURIComponent(hm[1]);if(code.indexOf('CONN1:')!==0)code='CONN1:'+code;
+    try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+    connectWith(code,function(msg){if(msg){$('connDet').open=true;$('connErr').textContent=msg;$('connErr').hidden=false}else toast('Connecté au Google Sheet')});
+  }
+  refreshForm();render();
+  if(connected())syncNow(false);
+}
+init();
+})();
+</script>
+</body>
+</html>
