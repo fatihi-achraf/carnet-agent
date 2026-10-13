@@ -4,7 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Carnet Agent</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<meta name="theme-color" content="#1d3fa3">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Carnet Agent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
 /* Layout: one column phone ledger. Name card, entry form, pending list, then the send panel. Works offline. */
 :root{
@@ -76,6 +83,12 @@ form[data-type="reglement"]{--btn:var(--btn-regl)}
 .send{--btn:var(--ink)}
 .send .primary{color:var(--bg)}
 .ghost{display:inline-flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;color:inherit;min-height:50px;border:1.5px solid var(--line);background:var(--surface);border-radius:12px;font-weight:600;padding-inline:16px}
+.dlg{position:fixed;inset:0;z-index:30;background:rgba(8,12,28,.55);display:flex;align-items:flex-start;justify-content:center;padding:calc(20px + env(safe-area-inset-top,0px)) 14px 20px;overflow:auto}
+.dlg[hidden]{display:none}
+.dlg>div{width:min(100%,460px);margin-block:auto;background:var(--surface);color:var(--ink);border-radius:16px;padding:20px 18px;display:flex;flex-direction:column;gap:14px;box-shadow:0 20px 50px -10px rgba(0,0,0,.5)}
+.dlg h2{margin:0;font-size:1.1rem}
+.dlg .acts{display:flex;gap:10px;flex-wrap:wrap}
+.daycol{display:flex;flex-direction:column;gap:10px}.daycol[hidden]{display:none}
 .strip{display:flex;flex-wrap:wrap;gap:6px 22px}
 .strip div{display:flex;flex-direction:column}
 .strip span{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);font-weight:600}
@@ -139,6 +152,15 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
   </header>
   <p class="notice" id="storeWarn" hidden>Ce navigateur ne garde pas tes bons après fermeture. Envoie-les au responsable tout de suite après les avoir notés.</p>
 
+  <section class="card" id="installCard" hidden>
+    <h2>Installer l'application</h2>
+    <p class="hint" id="installText"></p>
+    <div class="row2">
+      <button class="primary" id="installBtn" type="button" hidden style="--btn:var(--vente)">Installer</button>
+      <button class="ghost" id="installHide" type="button">Plus tard</button>
+    </div>
+  </section>
+
   <section class="card" id="nameCard" hidden>
     <h2>Ton prénom</h2>
     <p class="hint">Il apparaîtra sur chaque bon que tu envoies. Tu le saisis une seule fois.</p>
@@ -153,6 +175,17 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
       <div class="big" id="drawerBig"></div>
       <div class="strip" id="drawerStrip"></div>
       <p class="hint" id="drawerNote"></p>
+      <div id="dayBox" class="daycol" hidden style="margin-block-start:12px">
+        <button class="primary" id="dayBtn" type="button">Clôturer la journée</button>
+        <div id="dayPanel" class="daycol" hidden>
+          <div class="strip" id="dayStrip"></div>
+          <label class="field"><span>Cash compté dans le tiroir</span><input id="dayCount" inputmode="decimal" autocomplete="off" placeholder="0,00" aria-label="Cash compté en DH"></label>
+          <p class="hint" id="dayRes" role="status"></p>
+          <p class="err" id="dayErr" role="alert" hidden></p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="primary" id="dayGo" type="button">Confirmer la clôture</button><button class="ghost" id="dayCancel" type="button">Annuler</button></div>
+        </div>
+        <p class="hint" id="dayLast"></p>
+      </div>
     </section>
     <form class="card" id="bonForm" data-type="vente" novalidate>
       <div class="seg" role="radiogroup" aria-label="Type de bon">
@@ -286,6 +319,16 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
     </section>
   </div>
 </div>
+<div class="dlg" id="editDlg" hidden role="dialog" aria-modal="true" aria-labelledby="edT"><div>
+  <h2 id="edT">Modifier le bon</h2>
+  <label class="field"><span>Montant</span><div class="money"><input id="edAmount" inputmode="decimal" autocomplete="off" placeholder="0,00"><i>DH</i></div></label>
+  <label class="field"><span>Mode de paiement</span><select id="edMode"></select></label>
+  <label class="field" id="edClientBox"><span>Client</span><select id="edClient"></select></label>
+  <label class="field" id="edProdBox"><span>Produit</span><select id="edProduct"></select></label>
+  <label class="field"><span id="edLabelCap">Détail</span><input id="edLabel" maxlength="120" autocomplete="off"></label>
+  <p class="err" id="edErr" role="alert" hidden></p>
+  <div class="acts"><button class="primary" id="edSave" type="button">Enregistrer</button><button class="ghost" id="edCancel" type="button">Annuler</button></div>
+</div></div>
 <div class="pop" id="pop" hidden role="alertdialog" aria-live="assertive" aria-labelledby="popT"><div><i id="popI">✓</i><b id="popT"></b><span id="popS"></span><button class="ghost" id="popOk" type="button" style="margin-top:8px;min-width:140px">OK</button></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -357,7 +400,7 @@ function pending(){return data.ops.filter(function(o){return !o.sent}).sort(func
 function sentOps(){return data.ops.filter(function(o){return o.sent}).sort(function(a,b){return b.s-a.s})}
 function rowHtml(o,canDel){
   var isV=o.t==='vente',isR=o.t==='reglement',t=new Date(o.s);
-  var act=canDel?'<button type="button" class="mini'+(armed===o.i?' arm':'')+'" data-del="'+esc(o.i)+'">'+(armed===o.i?'Confirmer la suppression ?':'Supprimer')+'</button>':'';
+  var act=canDel?'<button type="button" class="mini" data-hedit="'+esc(o.i)+'">Modifier</button><button type="button" class="mini'+(armed===o.i?' arm':'')+'" data-del="'+esc(o.i)+'">'+(armed===o.i?'Confirmer la suppression ?':'Supprimer')+'</button>':(o.sent&&connected()?ownBtns(o.i):'');
   var lbl=o.n?'<b>'+esc(o.n)+'</b>'+(o.l?' · '+esc(o.l):''):(esc(o.l)||typeLabel(o.t));
   var tag=(o.m==='credit'?'<span class="tag credit">Crédit</span>':((o.m!=='especes'||isR)?'<span class="tag'+(isR?' rg':'')+'">'+MODES[o.m]+'</span>':''))+(o.p?'<span class="tag">'+esc(o.p)+'</span>':'');
   return '<li class="op '+(isR?'reglement':(isV?'vente':'charge'))+'"><div><div class="lbl">'+lbl+'</div><div class="meta"><span>'+dLabel(o.d)+' · '+pad(t.getHours())+':'+pad(t.getMinutes())+' · '+typeLabel(o.t)+'</span>'+tag+act+'</div></div><div class="amt">'+(isV||isR?'+':'−')+fmt(o.c)+'</div></li>';
@@ -417,6 +460,23 @@ function syncNow(manual){
     });
 }
 function queueSync(){clearTimeout(syncT);syncT=setTimeout(function(){syncNow(false)},400)}
+function fmtS(c){return (c<0?'−':'')+fmt(c)}
+function maxDate(){var v=data.view;return (connected()&&v&&v.workDate)?v.workDate:todayStr()}
+function syncDate(){var d=$('date'),m=maxDate();d.max=m;if(!d.dataset.touched)d.value=m}
+function renderDay(){
+  var on=connected(),f=on?drawerFigures():null,box=$('dayBox');
+  box.hidden=!on||!f;
+  if(!on||!f){$('dayPanel').hidden=true;return}
+  $('dayBtn').hidden=!$('dayPanel').hidden;
+  $('dayBtn').disabled=!f.fondKnown;
+  var v=data.view||{},ld=v.lastDay;
+  $('dayLast').textContent=!f.fondKnown?'Le responsable doit d’abord fixer le fond de départ pour que tu puisses clôturer.':(ld?'Dernière clôture : '+dLabel(ld.date)+' à '+hhmm(ld.at)+' · retiré '+fmtS(ld.retire)+' DH'+(ld.by?' · '+(/^u_/.test(ld.by)?'Responsable':ld.by):''):'');
+  if(!$('dayPanel').hidden){
+    $('dayStrip').innerHTML='<div><span>Dans le tiroir</span><b>'+fmt(f.total)+'</b></div><div><span>Fond à laisser</span><b>'+fmt(f.fond)+'</b></div><div><span>À retirer</span><b class="pos">'+fmtS(f.total-f.fond)+'</b></div>';
+    var c=parseMoney($('dayCount').value);
+    $('dayRes').textContent=c==null?'Compte l’argent du tiroir, écris le montant, puis retire-en '+fmtS(f.total-f.fond)+' DH pour ne laisser que le fond.':(c===f.total?'Caisse juste. Retire '+fmtS(c-f.fond)+' DH et laisse '+fmt(f.fond)+' DH.':(c<f.total?'Manque '+fmt(f.total-c)+' DH. ':'Surplus '+fmt(c-f.total)+' DH. ')+'Retire '+fmtS(c-f.fond)+' DH et laisse '+fmt(f.fond)+' DH.');
+  }
+}
 function drawerFigures(){
   var v=data.view;if(!v||!v.week)return null;
   var ws=v.week,we=addDaysStr(ws,6),vE=v.vEsp||0,rE=v.rgEsp||0,cE=v.cEsp||0,n=0;
@@ -429,11 +489,14 @@ function drawerFigures(){
   var fond=v.fondKnown?(v.fond||0):0;
   return {ws:ws,fondKnown:!!v.fondKnown,fond:fond,v:vE,r:rE,c:cE,total:fond+vE+rE-cE,n:n,closed:!!v.closed,got:v.got};
 }
+function ownBtns(id){
+  return '<button type="button" class="mini" data-hedit="'+esc(id)+'">Modifier</button><button type="button" class="mini'+(armed===id?' arm':'')+'" data-hdel="'+esc(id)+'">'+(armed===id?'Confirmer la suppression ?':'Supprimer')+'</button>';
+}
 function histRow(o){
   var r=o.t==='reglement',t=new Date(o.s);
   var who=(o.n?'<b>'+esc(o.n)+'</b>':'')+(o.l?(o.n?' · ':'')+esc(o.l):'')||typeLabel(o.t);
   var tag=(o.m==='credit'?'<span class="tag credit">Crédit</span>':((o.m!=='especes'||r)?'<span class="tag'+(r?' rg':'')+'">'+(MODES[o.m]||o.m)+'</span>':''))+(o.p?'<span class="tag">'+esc(o.p)+'</span>':'');
-  return '<li class="hrow op '+(r?'reglement':'vente')+'" style="display:grid"><div><div class="lbl">'+who+'</div><div class="meta"><span>'+dLabel(o.d)+(o.s?' · '+pad(t.getHours())+':'+pad(t.getMinutes()):'')+' · '+typeLabel(o.t)+(o.a?' · '+esc(o.a):'')+'</span>'+tag+'</div></div><div class="amt">+'+fmt(o.c)+'</div></li>';
+  return '<li class="hrow op '+(r?'reglement':'vente')+'" style="display:grid"><div><div class="lbl">'+who+'</div><div class="meta"><span>'+dLabel(o.d)+(o.s?' · '+pad(t.getHours())+':'+pad(t.getMinutes()):'')+' · '+typeLabel(o.t)+(o.a?' · '+esc(o.a):'')+'</span>'+tag+(connected()&&o.a&&o.a===data.agent?ownBtns(o.id):'')+'</div></div><div class="amt">+'+fmt(o.c)+'</div></li>';
 }
 function localExtra(){
   var v=data.view,got=v?v.got:0,out=[];
@@ -563,7 +626,7 @@ function render(){
     $('sendHint').textContent=p.length?'Tu pourras choisir WhatsApp ou copier le message. Le responsable le colle dans l’application.':'';
   }
   $('clientsCard').hidden=on;
-  renderDrawer();renderConn();renderHist();renderProducts();renderProdManager();
+  renderDrawer();renderDay();syncDate();renderConn();renderHist();renderProducts();renderProdManager();
   var s=sentOps();
   $('sentCard').hidden=!s.length;
   $('sentSum').textContent='Déjà envoyés ('+s.length+')';
@@ -636,9 +699,119 @@ function refreshForm(){
 }
 function closeSendPanel(){$('sendPanel').hidden=true;snapshot=null}
 
+
+/* ---------- installation (écran d'accueil) ---------- */
+var deferredInstall=null;
+function isStandalone(){return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true}
+function hideInstall(remember){
+  $('installCard').hidden=true;
+  if(remember){try{localStorage.setItem(KEY+'-hideinstall','1')}catch(e){}}
+}
+function setupInstall(){
+  var hidden=false;
+  try{hidden=localStorage.getItem(KEY+'-hideinstall')==='1'}catch(e){}
+  if(isStandalone()||hidden||location.protocol==='file:')return;
+  var ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  var txt=$('installText');
+  if(ios){
+    txt.textContent='Dans Safari, touche le bouton Partager, puis « Sur l\u2019écran d\u2019accueil ». Ouvre ensuite Carnet Agent depuis son icône et note tes bons à partir de là. Les bons notés avant l\u2019installation restent dans Safari.';
+  }else{
+    txt.textContent='Ouvre le menu du navigateur (trois points), puis « Installer l\u2019application » ou « Ajouter à l\u2019écran d\u2019accueil ». Ouvre ensuite Carnet Agent depuis son icône.';
+  }
+  $('installCard').hidden=false;
+  window.addEventListener('beforeinstallprompt',function(e){
+    e.preventDefault();deferredInstall=e;
+    txt.textContent='Installe Carnet Agent sur ton téléphone pour l\u2019ouvrir d\u2019un toucher, même sans internet.';
+    $('installBtn').hidden=false;
+  });
+  window.addEventListener('appinstalled',function(){hideInstall(true);toast('Application installée')});
+  $('installBtn').addEventListener('click',function(){
+    if(!deferredInstall)return;
+    deferredInstall.prompt();
+    deferredInstall.userChoice.then(function(){deferredInstall=null;$('installBtn').hidden=true},function(){});
+  });
+  $('installHide').addEventListener('click',function(){hideInstall(true)});
+}
+if('serviceWorker' in navigator&&location.protocol!=='file:'){
+  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+}
+
+var edSrc=null;
+function findSrc(id){
+  var lo=data.ops.find(function(o){return o.i===id});
+  if(lo)return {id:id,t:lo.t,m:lo.m,c:lo.c,l:lo.l||'',n:lo.n||'',k:lo.n?clientId(lo.n):'',p:lo.p||'',local:lo,sent:!!lo.sent};
+  var h=((data.view&&data.view.hist)||[]).find(function(o){return o.id===id});
+  if(h)return {id:id,t:h.t,m:h.m,c:h.c,l:h.l||'',n:h.n||'',k:h.k||'',p:h.p||'',local:null,sent:true};
+  return null;
+}
+function edNeedClient(){var t=edSrc.t,m=$('edMode').value;return t==='reglement'||(t==='vente'&&m==='credit')}
+function edRefresh(){
+  var t=edSrc.t,m=$('edMode').value,needLbl=t==='charge'||(t==='vente'&&m!=='especes'&&m!=='credit');
+  $('edClientBox').hidden=!edNeedClient();$('edProdBox').hidden=t!=='vente';
+  $('edLabelCap').textContent=t==='charge'?'Détail de la charge (obligatoire)':(needLbl?'Client ou référence (obligatoire)':'Détail (facultatif)');
+}
+function openEdit(id){
+  var s=findSrc(id);if(!s)return;
+  edSrc=s;
+  var keys=s.t==='vente'?['especes','virement','cheque','credit']:['especes','virement','cheque'];
+  if(keys.indexOf(s.m)<0)keys.push(s.m);
+  $('edT').textContent='Modifier : '+(s.t==='vente'?'vente':(s.t==='reglement'?'règlement':'charge'));
+  $('edAmount').value=(s.c/100).toFixed(2).replace(/\.00$/,'').replace('.',',');
+  $('edMode').innerHTML=keys.map(function(k){return '<option value="'+k+'">'+(MODES[k]||k)+'</option>'}).join('');$('edMode').value=s.m;
+  var cl=clientsSorted().slice();
+  if(s.k&&!cl.some(function(c){return c.id===s.k}))cl.push({id:s.k,name:s.n||'Client'});
+  $('edClient').innerHTML=cl.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>'}).join('');
+  if(s.k)$('edClient').value=s.k;
+  var pl=productList().slice();if(s.p&&pl.indexOf(s.p)<0)pl.push(s.p);
+  $('edProduct').innerHTML='<option value="">— Sans produit —</option>'+pl.map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>'}).join('');
+  $('edProduct').value=s.p||'';
+  $('edLabel').value=s.l||'';
+  $('edErr').hidden=true;edRefresh();
+  $('editDlg').hidden=false;$('edAmount').focus();
+}
+function closeEdit(){$('editDlg').hidden=true;edSrc=null}
+function saveEdit(){
+  if(!edSrc)return;
+  var er=$('edErr');function err(m){er.textContent=m;er.hidden=false}
+  var cents=parseMoney($('edAmount').value),mode=$('edMode').value,t=edSrc.t,label=$('edLabel').value.trim();
+  if(cents==null||cents<=0){err('Écris un montant supérieur à zéro.');return}
+  if(cents>1000000000){err('Montant trop grand.');return}
+  var needLbl=t==='charge'||(t==='vente'&&mode!=='especes'&&mode!=='credit');
+  if(needLbl&&!label){err(t==='charge'?'Écris le détail de la charge.':'Écris le client ou une référence pour ce mode de paiement.');return}
+  var needCl=edNeedClient(),cid=needCl?$('edClient').value:'',cname='';
+  if(needCl){
+    var c=data.clients[cid];cname=c?c.name:(edSrc.n||'');
+    if(!cid||!cname){err('Choisis le client.');return}
+  }
+  var prod=t==='vente'?$('edProduct').value:'',s=edSrc;
+  function applyLocal(o){o.m=mode;o.c=cents;o.l=label.slice(0,120);if(prod)o.p=prod;else delete o.p;if(cname)o.n=cname;else delete o.n}
+  if(s.local&&!s.sent){applyLocal(s.local);save();closeEdit();render();queueSync();showPop('Bon modifié ✓',fmt(cents)+' DH · '+(MODES[mode]||mode)+(cname?' · '+cname:''));return}
+  if(!connected()){err('Pas de connexion au Google Sheet.');return}
+  $('edSave').disabled=true;
+  apiWith(data.conn,'editOp',{id:s.id,patch:{mode:mode,cents:cents,label:label.slice(0,120),product:prod,client:cid,clientName:cname},by:data.agent}).then(function(){
+    if(s.local){applyLocal(s.local);save()}
+    closeEdit();showPop('Bon modifié ✓',fmt(cents)+' DH · '+(MODES[mode]||mode)+(cname?' · '+cname:''));
+    return syncNow();
+  }).catch(function(e){
+    err(e.code==='forbidden'?'Tu ne peux modifier que tes propres bons (ou le script Google n’est pas à jour).':(e.code==='network'?'Pas de connexion. Réessaie.':(e.code==='action'?'Le script Google n’est pas à jour : demande au responsable de le mettre à jour.':(e.message||'Erreur'))));
+  }).then(function(){$('edSave').disabled=false});
+}
+function delOwn(id){
+  var s=findSrc(id);if(!s)return;
+  if(armed!==id){armed=id;clearTimeout(armT);armT=setTimeout(function(){armed=null;render()},3500);render();return}
+  armed=null;clearTimeout(armT);
+  if(s.local&&!s.sent){data.ops=data.ops.filter(function(o){return o.i!==id});save();closeSendPanel();toast('Bon supprimé');render();queueSync();return}
+  if(!connected())return;
+  apiWith(data.conn,'cancelOwn',{id:id,by:data.agent}).then(function(){
+    data.ops=data.ops.filter(function(o){return o.i!==id});save();toast('Bon supprimé');render();return syncNow();
+  }).catch(function(e){toast(e.code==='forbidden'?'Tu ne peux supprimer que tes propres bons.':(e.code==='network'?'Pas de connexion. Réessaie.':'Suppression impossible'));render()});
+}
 function init(){
   load();
+  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(function(){})}catch(e){}
+  setupInstall();
   $('date').max=todayStr();$('date').value=todayStr();
+  $('date').addEventListener('input',function(){this.dataset.touched='1'});
   CHIPS.forEach(function(t){
     var b=document.createElement('button');b.type='button';b.className='chip';b.textContent=t;
     b.addEventListener('click',function(){$('label').value=t;(!$('amount').value?$('amount'):$('label')).focus()});
@@ -673,7 +846,7 @@ function init(){
       cl=formClient&&data.clients[formClient];
       if(!cl){err('Choisis le client dans la liste, ou crée-le. Le nom doit être écrit une seule fois pour que son crédit soit bien suivi.',$('clientQ'));return}
     }
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>todayStr()){err('Choisis une date valide, pas dans le futur.',$('date'));return}
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>maxDate()){err('Choisis une date valide, pas dans le futur.',$('date'));return}
     var nop={i:newId(),t:type,m:mode,c:cents,l:label.slice(0,120),d:date,s:Date.now(),sent:false};
     if(cl)nop.n=cl.name;
     if(type==='vente'&&!$('productBox').hidden&&$('product').value)nop.p=$('product').value;
@@ -777,6 +950,36 @@ function init(){
     toast(Object.keys(next).length+' clients dans ta liste');render();
   });
 
+  $('dayBtn').addEventListener('click',function(){$('dayPanel').hidden=false;$('dayBtn').hidden=true;$('dayErr').hidden=true;$('dayCount').value='';renderDay();$('dayCount').focus()});
+  $('dayCancel').addEventListener('click',function(){$('dayPanel').hidden=true;renderDay()});
+  $('dayCount').addEventListener('input',renderDay);
+  $('dayGo').addEventListener('click',function(){
+    var er=$('dayErr'),c=parseMoney($('dayCount').value);er.hidden=true;
+    function fail(m){er.textContent=m;er.hidden=false;$('dayGo').disabled=false}
+    if(c==null||c<0){fail('Écris le cash compté dans le tiroir (0 s’il est vide).');return}
+    if(!connected())return;
+    $('dayGo').disabled=true;
+    syncNow().then(function(){
+      if(pending().length)throw {code:'pending'};
+      var v=data.view||{};
+      return apiWith(data.conn,'closeDay',{counted:c,date:v.workDate,by:data.agent});
+    }).then(function(r){
+      var d=r.day;
+      $('dayPanel').hidden=true;$('dayGo').disabled=false;
+      showPop('Journée clôturée ✓','Retire '+fmtS(d.retire)+' DH du tiroir et laisse '+fmt(d.fond)+' DH.'+(d.ecart?' Écart : '+fmtS(d.ecart)+' DH.':''));
+      return syncNow();
+    }).catch(function(e){
+      fail(e.code==='pending'?'Des bons ne sont pas encore envoyés. Vérifie la connexion puis réessaie.':(e.code==='network'?'Pas de connexion. Réessaie.':(e.code==='nofond'?'Le responsable doit d’abord fixer le fond de départ.':(e.code==='action'?'Le script Google n’est pas à jour : demande au responsable de le mettre à jour.':(e.message||'Erreur')))));
+    });
+  });
+  $('edMode').addEventListener('change',edRefresh);
+  $('edCancel').addEventListener('click',closeEdit);
+  $('edSave').addEventListener('click',saveEdit);
+  $('editDlg').addEventListener('click',function(e){if(e.target===$('editDlg'))closeEdit()});
+  document.addEventListener('click',function(e){
+    var eb=e.target.closest('[data-hedit]');if(eb){openEdit(eb.dataset.hedit);return}
+    var db=e.target.closest('[data-hdel]');if(db){delOwn(db.dataset.hdel);return}
+  });
   $('prodManage').addEventListener('click',function(){var d=$('prodDet');d.open=true;d.scrollIntoView({block:'center'})});
   $('prodAdd').addEventListener('click',function(){
     var n=String($('prodName').value||'').replace(/\s+/g,' ').trim().slice(0,40),er=$('prodErr');er.hidden=true;

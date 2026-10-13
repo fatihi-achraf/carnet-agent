@@ -1,5 +1,5 @@
 /* Carnet Agent: cache simple. En ligne on prend la dernière version, hors ligne on sert la copie gardée. */
-const CACHE='carnet-agent-v10';
+const CACHE='carnet-agent-v14';
 const ASSETS=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
