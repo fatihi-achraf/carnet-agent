@@ -4,14 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Carnet Agent</title>
-<meta name="theme-color" content="#1d3fa3">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Carnet Agent">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-192.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..900&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 /* Layout: one column phone ledger. Name card, entry form, pending list, then the send panel. Works offline. */
 :root{
@@ -145,15 +138,6 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
     <div class="who" id="who" hidden><span>Agent : <b id="whoName"></b></span><button class="link" id="renameBtn" type="button">Changer</button></div>
   </header>
   <p class="notice" id="storeWarn" hidden>Ce navigateur ne garde pas tes bons après fermeture. Envoie-les au responsable tout de suite après les avoir notés.</p>
-
-  <section class="card" id="installCard" hidden>
-    <h2>Installer l'application</h2>
-    <p class="hint" id="installText"></p>
-    <div class="row2">
-      <button class="primary" id="installBtn" type="button" hidden style="--btn:var(--vente)">Installer</button>
-      <button class="ghost" id="installHide" type="button">Plus tard</button>
-    </div>
-  </section>
 
   <section class="card" id="nameCard" hidden>
     <h2>Ton prénom</h2>
@@ -652,47 +636,8 @@ function refreshForm(){
 }
 function closeSendPanel(){$('sendPanel').hidden=true;snapshot=null}
 
-
-/* ---------- installation (écran d'accueil) ---------- */
-var deferredInstall=null;
-function isStandalone(){return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true}
-function hideInstall(remember){
-  $('installCard').hidden=true;
-  if(remember){try{localStorage.setItem(KEY+'-hideinstall','1')}catch(e){}}
-}
-function setupInstall(){
-  var hidden=false;
-  try{hidden=localStorage.getItem(KEY+'-hideinstall')==='1'}catch(e){}
-  if(isStandalone()||hidden||location.protocol==='file:')return;
-  var ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-  var txt=$('installText');
-  if(ios){
-    txt.textContent='Dans Safari, touche le bouton Partager, puis « Sur l\u2019écran d\u2019accueil ». Ouvre ensuite Carnet Agent depuis son icône et note tes bons à partir de là. Les bons notés avant l\u2019installation restent dans Safari.';
-  }else{
-    txt.textContent='Ouvre le menu du navigateur (trois points), puis « Installer l\u2019application » ou « Ajouter à l\u2019écran d\u2019accueil ». Ouvre ensuite Carnet Agent depuis son icône.';
-  }
-  $('installCard').hidden=false;
-  window.addEventListener('beforeinstallprompt',function(e){
-    e.preventDefault();deferredInstall=e;
-    txt.textContent='Installe Carnet Agent sur ton téléphone pour l\u2019ouvrir d\u2019un toucher, même sans internet.';
-    $('installBtn').hidden=false;
-  });
-  window.addEventListener('appinstalled',function(){hideInstall(true);toast('Application installée')});
-  $('installBtn').addEventListener('click',function(){
-    if(!deferredInstall)return;
-    deferredInstall.prompt();
-    deferredInstall.userChoice.then(function(){deferredInstall=null;$('installBtn').hidden=true},function(){});
-  });
-  $('installHide').addEventListener('click',function(){hideInstall(true)});
-}
-if('serviceWorker' in navigator&&location.protocol!=='file:'){
-  window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
-}
-
 function init(){
   load();
-  try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(function(){})}catch(e){}
-  setupInstall();
   $('date').max=todayStr();$('date').value=todayStr();
   CHIPS.forEach(function(t){
     var b=document.createElement('button');b.type='button';b.className='chip';b.textContent=t;
