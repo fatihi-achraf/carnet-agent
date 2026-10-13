@@ -65,6 +65,8 @@ button{cursor:pointer}
 .modes label{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1.5px solid var(--line);border-radius:999px;font-weight:500;background:var(--surface-2);color:var(--ink-2);cursor:pointer}
 .modes input:checked+label{background:var(--ink);border-color:var(--ink);color:var(--bg);font-weight:600}
 .field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field select{width:100%;min-width:0;min-height:46px;padding:10px 40px 10px 12px;border:1px solid var(--line);border-radius:10px;background-color:var(--surface);color:var(--ink);font:inherit;font-weight:500;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238a94b3' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;background-size:16px;text-overflow:ellipsis}
+.linkbtn{background:none;border:0;color:var(--ink-2);text-decoration:underline;padding:6px 0;text-align:left;font:inherit;font-size:.85rem;cursor:pointer;align-self:flex-start}
 .field input,.field textarea{width:100%;min-width:0;min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
 .money{position:relative}
 .money input{font-family:var(--f-mono);font-weight:600;font-size:1.9rem;min-height:64px;padding-right:58px;text-align:right}
@@ -116,6 +118,20 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
 .drawer .big{font-family:var(--f-mono);font-weight:600;font-size:2.2rem;line-height:1.1}
 .drawer .big small{font-size:1rem;color:var(--ink-2)}
 .drawer .strip b.pos{color:var(--ok)}
+.hrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;padding:10px 12px;border-top:1px solid var(--line)}
+.hrow:first-child{border-top:0}
+.cc-top{display:flex;flex-wrap:wrap;gap:6px 18px;padding:12px;border-radius:12px;background:var(--surface-2)}
+.cc-top div{display:flex;flex-direction:column}.cc-top span{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);font-weight:600}.cc-top b{font-family:var(--f-mono);font-size:1.05rem}
+.cc-btn{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:46px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);text-align:left}
+.cc-btn small{font-family:var(--f-mono);white-space:nowrap;color:var(--ink-2)}
+.cc-btn.due small{color:var(--warn);font-weight:600}
+.pop{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:calc(70px + env(safe-area-inset-top,0px)) 24px 24px;pointer-events:none;z-index:20}
+.pop[hidden]{display:none}
+.pop>div{pointer-events:auto;width:min(88vw,360px);background:var(--surface);color:var(--ink);border-radius:18px;padding:24px 20px;text-align:center;box-shadow:0 20px 50px -10px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px;align-items:center}
+.pop i{font-style:normal;width:56px;height:56px;border-radius:50%;background:var(--ok);color:#fff;font-size:2rem;line-height:56px;font-weight:700}
+.pop.warn i{background:var(--warn);}
+.pop b{font-family:var(--f-display);font-size:1.2rem}
+.pop span{color:var(--ink-2);font-size:.92rem}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);max-width:min(92vw,520px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.9rem;font-weight:500;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:8}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media (prefers-reduced-motion: reduce){.toast{transition:none}}
@@ -164,11 +180,14 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
         <div class="modes">
           <input type="radio" name="mode" id="m-especes" value="especes" checked><label for="m-especes">Espèces</label>
           <input type="radio" name="mode" id="m-virement" value="virement"><label for="m-virement">Virement</label>
-          <input type="radio" name="mode" id="m-carte" value="carte"><label for="m-carte">Carte</label>
           <input type="radio" name="mode" id="m-cheque" value="cheque"><label for="m-cheque">Chèque</label>
           <input type="radio" name="mode" id="m-credit" value="credit"><label for="m-credit" id="lbl-credit">Crédit</label>
         </div>
       </fieldset>
+      <div class="field" id="productBox" hidden><label for="product" style="font-size:.72rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2)">Produit (facultatif)</label>
+        <select id="product"><option value="">— Sans produit —</option></select>
+        <button type="button" class="linkbtn" id="prodManage">Ajouter ou modifier les produits</button>
+      </div>
       <div class="field" id="clientBox" hidden>
         <span id="clientCap">Client</span>
         <div class="csel" id="clientSel" hidden></div>
@@ -211,6 +230,39 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
       </div>
     </section>
 
+    <section class="card" style="margin-block-start:16px" id="histCard" hidden>
+      <details>
+        <summary id="histSum">Historique de la semaine</summary>
+        <div style="margin-block-start:12px;display:flex;flex-direction:column;gap:10px">
+          <p class="hint">Les ventes et les règlements de tous les agents cette semaine. Les charges des autres ne sont pas affichées.</p>
+          <div id="histBox"></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="card" style="margin-block-start:16px" id="ccCard" hidden>
+      <details>
+        <summary id="ccSum">Clients à crédit</summary>
+        <div style="margin-block-start:12px;display:flex;flex-direction:column;gap:10px">
+          <input id="ccQ" autocomplete="off" placeholder="Chercher un client" aria-label="Chercher un client" style="min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)">
+          <div id="ccBox"></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="card" style="margin-block-start:16px" id="prodCard">
+      <details id="prodDet">
+        <summary id="prodSum">Produits (liste)</summary>
+        <div style="margin-block-start:12px;display:flex;flex-direction:column;gap:10px">
+          <p class="hint">Écris tes produits une fois. Ensuite, dans une vente, tu choisis le produit. La liste est partagée avec le responsable et les autres agents.</p>
+          <div id="prodList" class="chips"></div>
+          <label class="field"><span>Nouveau produit</span><input id="prodName" autocomplete="off" maxlength="40" placeholder="Ex : Pain, Lait, Gâteaux"></label>
+          <p class="err" id="prodErr" role="alert" hidden></p>
+          <button class="ghost" id="prodAdd" type="button">Ajouter le produit</button>
+        </div>
+      </details>
+    </section>
+
     <section class="card" style="margin-block-start:16px" id="clientsCard">
       <details>
         <summary id="clientsSum">Liste des clients</summary>
@@ -228,8 +280,8 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
         <summary id="connSum">Connexion Google Sheet</summary>
         <div style="margin-block-start:12px;display:flex;flex-direction:column;gap:10px">
           <div id="connOff" style="display:flex;flex-direction:column;gap:10px">
-            <p class="hint">Le responsable t’envoie un lien ou un code « CONN1: ». Colle-le ici : tes bons partent alors tout seuls et tu vois l’argent qui est dans le tiroir.</p>
-            <textarea class="msgBox" id="connText" aria-label="Code de connexion" placeholder="CONN1:…" style="min-height:80px"></textarea>
+            <p class="hint">Le responsable t’envoie un lien ou un code « CONN1: ». Colle ici le lien complet (ou le code) : tes bons partent alors tout seuls et tu vois l’argent qui est dans le tiroir.</p>
+            <textarea class="msgBox" id="connText" aria-label="Code de connexion" placeholder="https://…#c=…  ou  CONN1:…" style="min-height:80px"></textarea>
             <p class="err" id="connErr" role="alert" hidden></p>
             <button class="ghost" id="connGo" type="button">Connecter</button>
           </div>
@@ -249,6 +301,7 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
     </section>
   </div>
 </div>
+<div class="pop" id="pop" hidden role="alertdialog" aria-live="assertive" aria-labelledby="popT"><div><i id="popI">✓</i><b id="popT"></b><span id="popS"></span><button class="ghost" id="popOk" type="button" style="margin-top:8px;min-width:140px">OK</button></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -289,6 +342,12 @@ function b64d(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='='
 function clientsSorted(){return Object.keys(data.clients).map(function(k){return Object.assign({id:k},data.clients[k])}).filter(function(c){return c.name}).sort(function(a,b){return a.name.localeCompare(b.name,'fr')})}
 function typeLabel(t){return t==='vente'?'Vente':(t==='reglement'?'Règlement':'Charge')}
 function newId(){return 'a'+Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+var popT=null;
+function showPop(title,sub,warn){
+  var p=$('pop');p.classList.toggle('warn',!!warn);
+  $('popI').textContent=warn?'!':'✓';$('popT').textContent=title;$('popS').textContent=sub||'';
+  p.hidden=false;clearTimeout(popT);popT=setTimeout(function(){p.hidden=true},warn?6000:3000);
+}
 function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show')},2600)}
 
 function b64e(str){
@@ -315,7 +374,7 @@ function rowHtml(o,canDel){
   var isV=o.t==='vente',isR=o.t==='reglement',t=new Date(o.s);
   var act=canDel?'<button type="button" class="mini'+(armed===o.i?' arm':'')+'" data-del="'+esc(o.i)+'">'+(armed===o.i?'Confirmer la suppression ?':'Supprimer')+'</button>':'';
   var lbl=o.n?'<b>'+esc(o.n)+'</b>'+(o.l?' · '+esc(o.l):''):(esc(o.l)||typeLabel(o.t));
-  var tag=o.m==='credit'?'<span class="tag credit">Crédit</span>':((o.m!=='especes'||isR)?'<span class="tag'+(isR?' rg':'')+'">'+MODES[o.m]+'</span>':'');
+  var tag=(o.m==='credit'?'<span class="tag credit">Crédit</span>':((o.m!=='especes'||isR)?'<span class="tag'+(isR?' rg':'')+'">'+MODES[o.m]+'</span>':''))+(o.p?'<span class="tag">'+esc(o.p)+'</span>':'');
   return '<li class="op '+(isR?'reglement':(isV?'vente':'charge'))+'"><div><div class="lbl">'+lbl+'</div><div class="meta"><span>'+dLabel(o.d)+' · '+pad(t.getHours())+':'+pad(t.getMinutes())+' · '+typeLabel(o.t)+'</span>'+tag+act+'</div></div><div class="amt">'+(isV||isR?'+':'−')+fmt(o.c)+'</div></li>';
 }
 /* ---- Google Sheet : connexion, synchro, caisse en espèces ---- */
@@ -336,6 +395,7 @@ function hhmm(t){var d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes
 function toServerOp(o){
   var x={id:o.i,type:o.t,mode:o.m,cents:o.c,label:o.l||'',date:o.d,ts:o.s,agent:data.agent};
   if(o.n){x.client=clientId(o.n);x.clientName=o.n}
+  if(o.p)x.product=o.p;
   return x;
 }
 function applyView(v){
@@ -384,6 +444,65 @@ function drawerFigures(){
   var fond=v.fondKnown?(v.fond||0):0;
   return {ws:ws,fondKnown:!!v.fondKnown,fond:fond,v:vE,r:rE,c:cE,total:fond+vE+rE-cE,n:n,closed:!!v.closed,got:v.got};
 }
+function histRow(o){
+  var r=o.t==='reglement',t=new Date(o.s);
+  var who=(o.n?'<b>'+esc(o.n)+'</b>':'')+(o.l?(o.n?' · ':'')+esc(o.l):'')||typeLabel(o.t);
+  var tag=(o.m==='credit'?'<span class="tag credit">Crédit</span>':((o.m!=='especes'||r)?'<span class="tag'+(r?' rg':'')+'">'+(MODES[o.m]||o.m)+'</span>':''))+(o.p?'<span class="tag">'+esc(o.p)+'</span>':'');
+  return '<li class="hrow op '+(r?'reglement':'vente')+'" style="display:grid"><div><div class="lbl">'+who+'</div><div class="meta"><span>'+dLabel(o.d)+(o.s?' · '+pad(t.getHours())+':'+pad(t.getMinutes()):'')+' · '+typeLabel(o.t)+(o.a?' · '+esc(o.a):'')+'</span>'+tag+'</div></div><div class="amt">+'+fmt(o.c)+'</div></li>';
+}
+function localExtra(){
+  var v=data.view,got=v?v.got:0,out=[];
+  data.ops.forEach(function(o){
+    if(o.t==='charge')return;
+    if(o.sent&&!(o.sa&&o.sa>got))return;
+    out.push({id:o.i,t:o.t,m:o.m,c:o.c,d:o.d,l:o.l||'',a:data.agent,n:o.n||'',k:o.n?clientId(o.n):'',s:o.s,p:o.p||''});
+  });
+  return out;
+}
+function renderHist(){
+  var on=connected();
+  $('histCard').hidden=!on;$('ccCard').hidden=!on;
+  if(!on)return;
+  var v=data.view||{},seen={},rows=[],f=drawerFigures(),ws=f?f.ws:null;
+  localExtra().forEach(function(o){if(!ws||(o.d>=ws&&o.d<=addDaysStr(ws,6))){seen[o.id]=1;rows.push(o)}});
+  (v.hist||[]).forEach(function(o){if(!seen[o.id]){seen[o.id]=1;rows.push(o)}});
+  rows.sort(function(a,b){return b.s-a.s});
+  $('histSum').textContent='Historique de la semaine ('+rows.length+')';
+  $('histBox').innerHTML=rows.length?'<ul class="ops">'+rows.slice(0,150).map(histRow).join('')+'</ul>':'<div class="empty"><strong>Aucun bon cette semaine.</strong></div>';
+  renderCc();
+}
+var ccSel=null;
+function ccData(){
+  var v=data.view||{},tot={},ops={},seen={},names={};
+  Object.keys(v.tot||{}).forEach(function(k){tot[k]=[v.tot[k][0],v.tot[k][1]]});
+  (v.cred||[]).forEach(function(o){seen[o.id]=1;(ops[o.k]||(ops[o.k]=[])).push(o);if(o.n)names[o.k]=o.n});
+  localExtra().forEach(function(o){
+    if(!o.k||seen[o.id])return;
+    var isCr=o.t==='reglement'||o.m==='credit';if(!isCr)return;
+    var t=tot[o.k]||(tot[o.k]=[0,0]);
+    if(o.t==='reglement')t[1]+=o.c;else t[0]+=o.c;
+    (ops[o.k]||(ops[o.k]=[])).push(o);names[o.k]=o.n;
+  });
+  Object.keys(data.clients).forEach(function(id){if(!names[id])names[id]=data.clients[id].name});
+  return {tot:tot,ops:ops,names:names};
+}
+function renderCc(){
+  if(!connected())return;
+  var d=ccData(),box=$('ccBox');
+  var ids=Object.keys(d.tot).filter(function(k){return d.names[k]});
+  if(ccSel&&!d.names[ccSel])ccSel=null;
+  if(ccSel){
+    var t=d.tot[ccSel]||[0,0],rest=t[0]-t[1],list=(d.ops[ccSel]||[]).slice().sort(function(a,b){return b.s-a.s});
+    box.innerHTML='<button class="link" type="button" data-cc="" style="align-self:flex-start">← Tous les clients</button><h3 style="font-family:var(--f-display);font-size:1.05rem;margin-block:6px">'+esc(d.names[ccSel])+'</h3><div class="cc-top"><div><span>Pris à crédit</span><b>'+fmt(t[0])+'</b></div><div><span>Payé</span><b>'+fmt(t[1])+'</b></div><div><span>'+(rest<0?'Avance':'Reste à payer')+'</span><b'+(rest>0?' style="color:var(--warn)"':'')+'>'+fmt(rest)+' DH</b></div></div>'+(list.length?'<ul class="ops" style="margin-block-start:10px">'+list.slice(0,80).map(histRow).join('')+'</ul>':'<p class="hint">Aucun détail.</p>');
+    $('ccSum').textContent='Clients à crédit · '+d.names[ccSel];
+    return;
+  }
+  var qk=nameKey($('ccQ').value);
+  ids=ids.filter(function(k){return !qk||nameKey(d.names[k]).indexOf(qk)>=0}).sort(function(a,b){return (d.tot[b][0]-d.tot[b][1])-(d.tot[a][0]-d.tot[a][1])||d.names[a].localeCompare(d.names[b],'fr')});
+  $('ccSum').textContent='Clients à crédit ('+Object.keys(d.tot).length+')';
+  $('ccQ').hidden=false;
+  box.innerHTML=ids.length?'<div style="display:flex;flex-direction:column;gap:6px">'+ids.map(function(k){var r=d.tot[k][0]-d.tot[k][1];return '<button type="button" class="cc-btn'+(r>0?' due':'')+'" data-cc="'+esc(k)+'"><span>'+esc(d.names[k])+'</span><small>'+(r>0?'reste '+fmt(r):(r<0?'avance '+fmt(r):'soldé'))+'</small></button>'}).join('')+'</div>':'<div class="empty"><strong>Aucun client à crédit.</strong></div>';
+}
 function renderDrawer(){
   var card=$('drawerCard'),on=connected();
   card.hidden=false;
@@ -411,10 +530,20 @@ function renderConn(){
   $('connInfo').textContent=on?'Tes bons sont envoyés automatiquement au responsable et la caisse se met à jour. Si tu te déconnectes, les bons déjà notés restent ici.':'';
 }
 function parseConn(text){
-  var m=/CONN1:([A-Za-z0-9_-]+)/.exec(String(text||''));
+  var s=String(text||''),m=/CONN1:([A-Za-z0-9_-]+)/.exec(s)||/[#&]c=(?:CONN1:)?([A-Za-z0-9_-]+)/.exec(s);
   if(!m)return null;
   try{var o=JSON.parse(b64d(m[1]));if(o&&typeof o.u==='string'&&/^(https:\/\/|http:\/\/localhost[:\/])/.test(o.u)&&typeof o.k==='string'&&o.k)return {u:o.u,k:o.k}}catch(e){}
   return null;
+}
+function pinManifestToLink(){
+  try{
+    var lk=document.querySelector('link[rel=manifest]');
+    if(!lk)return;
+    var base=new URL('.',location.href).href,abs=function(p){return new URL(p,base).href};
+    var man={id:location.href,name:'Carnet Agent',short_name:'Carnet',lang:'fr',start_url:location.href,scope:base,display:'standalone',orientation:'portrait',background_color:'#e9edf5',theme_color:'#1d3fa3',
+      icons:[{src:abs('icon-192.png'),sizes:'192x192',type:'image/png',purpose:'any'},{src:abs('icon-512.png'),sizes:'512x512',type:'image/png',purpose:'any'},{src:abs('icon-maskable-512.png'),sizes:'512x512',type:'image/png',purpose:'maskable'}]};
+    lk.href=URL.createObjectURL(new Blob([JSON.stringify(man)],{type:'application/manifest+json'}));
+  }catch(e){}
 }
 function connectWith(text,done){
   var c=parseConn(text);
@@ -449,7 +578,7 @@ function render(){
     $('sendHint').textContent=p.length?'Tu pourras choisir WhatsApp ou copier le message. Le responsable le colle dans l’application.':'';
   }
   $('clientsCard').hidden=on;
-  renderDrawer();renderConn();
+  renderDrawer();renderConn();renderHist();renderProducts();renderProdManager();
   var s=sentOps();
   $('sentCard').hidden=!s.length;
   $('sentSum').textContent='Déjà envoyés ('+s.length+')';
@@ -482,6 +611,29 @@ function renderClientPicker(){
   if(!qk&&!matches.length)html+='<p class="hint">Ta liste est vide. Colle la liste du responsable (en bas), ou écris un nom pour créer un client.</p>';
   $('clientRes').innerHTML=html;
 }
+function productList(){return (connected()&&data.view&&Array.isArray(data.view.products))?data.view.products:[]}
+function renderProducts(){
+  var type=document.querySelector('input[name=type]:checked').value,list=productList(),box=$('productBox'),sel=$('product');
+  box.hidden=type!=='vente';
+  var cur=sel.value;
+  if(sel.dataset.sig!==list.join('|')){
+    sel.innerHTML='<option value="">— Sans produit —</option>'+list.map(function(p){return '<option value="'+esc(p)+'">'+esc(p)+'</option>'}).join('');
+    sel.dataset.sig=list.join('|');
+    if(list.indexOf(cur)>=0)sel.value=cur;
+  }
+}
+function renderProdManager(){
+  var list=productList(),ok=connected();
+  $('prodSum').textContent='Produits (liste)'+(list.length?' · '+list.length:'');
+  $('prodList').innerHTML=!ok?'<p class="hint">Connecte-toi à la Google Sheet pour gérer les produits.</p>':(list.length?list.map(function(p){return '<span class="chip">'+esc(p)+' <button type="button" class="mini" data-prod-del="'+esc(p)+'" aria-label="Retirer '+esc(p)+'">×</button></span>'}).join(''):'<p class="hint">Aucun produit pour l’instant.</p>');
+  $('prodName').disabled=!ok;$('prodAdd').disabled=!ok;
+}
+function saveProducts(list){
+  return apiWith(data.conn,'setProducts',{products:list}).then(function(r){
+    var w=Object.assign({},data.view||{});w.products=r.products||list;data.view=w;save();render();
+  });
+}
+function prodFail(e){return e.code==='forbidden'||e.code==='action'?'Le script Google n’est pas à jour : demande au responsable de le mettre à jour.':(e.code==='network'?'Pas de connexion. Réessaie.':(e.message||'Erreur'))}
 function refreshForm(){
   var type=document.querySelector('input[name=type]:checked').value;
   var mode=document.querySelector('input[name=mode]:checked').value;
@@ -491,6 +643,7 @@ function refreshForm(){
   $('bonForm').dataset.type=type;
   $('saveBtn').textContent=type==='vente'?(mode==='credit'?'Enregistrer la vente à crédit':'Enregistrer la vente'):(type==='reglement'?'Enregistrer le règlement':'Enregistrer la charge');
   $('chips').hidden=type!=='charge';
+  renderProducts();
   var need=type==='charge'||(type==='vente'&&mode!=='especes'&&mode!=='credit');
   $('labelCap').textContent=type==='charge'?'Détail de la charge (obligatoire)':(type==='reglement'?'Note (facultatif)':(need?'Client ou référence (obligatoire)':'Détail (facultatif)'));
   $('label').placeholder=type==='charge'?'Ex : fournisseur, facture électricité':(type==='reglement'?'Ex : reste à payer le mois prochain':(need?'Ex : Mme Alaoui, virement du 11/10':'Ex : 2 pains, 1 lait'));
@@ -577,11 +730,23 @@ function init(){
     if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||date>todayStr()){err('Choisis une date valide, pas dans le futur.',$('date'));return}
     var nop={i:newId(),t:type,m:mode,c:cents,l:label.slice(0,120),d:date,s:Date.now(),sent:false};
     if(cl)nop.n=cl.name;
+    if(type==='vente'&&!$('productBox').hidden&&$('product').value)nop.p=$('product').value;
     data.ops.push(nop);
     save();closeSendPanel();
     $('amount').value='';$('label').value='';formClient=null;$('clientQ').value='';
     toast(typeLabel(type)+' noté'+(type==='charge'||type==='vente'?'e':'')+' : '+fmt(cents)+' DH · '+MODES[mode]+(cl?' · '+cl.name:''));
-    render();queueSync();$('amount').focus();
+    render();
+    if(connected()){
+      showPop('Enregistré ✓','Envoi au responsable…');
+      clearTimeout(syncT);
+      syncNow(false).then(function(){
+        if(!pending().some(function(o){return o.i===nop.i}))showPop('Sauvegardé et envoyé ✓','Le responsable voit ce bon, la caisse est à jour.');
+        else showPop('Enregistré sur le téléphone','Pas de connexion pour l’instant : il partira tout seul dès qu’il y a internet.',true);
+      });
+    }else{
+      showPop('Bon enregistré ✓','Il est sur ce téléphone. Pense à l’envoyer au responsable.');
+    }
+    $('amount').blur();
   });
 
   $('pendingBox').addEventListener('click',function(e){
@@ -666,6 +831,20 @@ function init(){
     toast(Object.keys(next).length+' clients dans ta liste');render();
   });
 
+  $('prodManage').addEventListener('click',function(){var d=$('prodDet');d.open=true;d.scrollIntoView({block:'center'})});
+  $('prodAdd').addEventListener('click',function(){
+    var n=String($('prodName').value||'').replace(/\s+/g,' ').trim().slice(0,40),er=$('prodErr');er.hidden=true;
+    if(n.length<2){er.textContent='Écris le nom du produit.';er.hidden=false;return}
+    var list=productList();
+    if(list.some(function(p){return p.toLowerCase()===n.toLowerCase()})){er.textContent='Ce produit existe déjà.';er.hidden=false;return}
+    $('prodAdd').disabled=true;
+    saveProducts(list.concat([n])).then(function(){$('prodName').value='';toast('Produit ajouté : '+n)}).catch(function(e){er.textContent=prodFail(e);er.hidden=false}).then(function(){renderProdManager()});
+  });
+  $('prodList').addEventListener('click',function(e){
+    var b=e.target.closest('[data-prod-del]');if(!b)return;
+    var name=b.dataset.prodDel;
+    saveProducts(productList().filter(function(p){return p!==name})).then(function(){toast('Produit retiré. Les anciens bons le gardent.')}).catch(function(x){toast(prodFail(x))});
+  });
   $('connGo').addEventListener('click',function(){
     var er=$('connErr');er.hidden=true;
     $('connGo').disabled=true;
@@ -675,6 +854,9 @@ function init(){
     });
   });
   $('drawerNote').addEventListener('click',function(e){if(e.target.id==='drawerConn'){$('connDet').open=true;$('connDet').scrollIntoView({block:'center'});$('connText').focus()}});
+  $('ccBox').addEventListener('click',function(e){var b=e.target.closest('[data-cc]');if(!b)return;ccSel=b.dataset.cc||null;$('ccQ').hidden=!!ccSel;renderCc()});
+  $('ccQ').addEventListener('input',renderCc);
+  $('popOk').addEventListener('click',function(){$('pop').hidden=true;$('amount').focus()});
   $('connStop').addEventListener('click',function(){data.conn=null;data.view=null;syncErr='';save();toast('Déconnecté');render()});
   window.addEventListener('online',function(){syncNow(false)});
   document.addEventListener('visibilitychange',function(){if(!document.hidden)syncNow(false)});
@@ -683,7 +865,8 @@ function init(){
   var hm=/[#&]c=([^&]+)/.exec(location.hash||'');
   if(hm){
     var code=decodeURIComponent(hm[1]);if(code.indexOf('CONN1:')!==0)code='CONN1:'+code;
-    try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+    /* le lien garde son code : l'icône ajoutée à l'écran d'accueil (iPhone) repart avec le même lien et se reconnecte seule */
+    pinManifestToLink();
     connectWith(code,function(msg){if(msg){$('connDet').open=true;$('connErr').textContent=msg;$('connErr').hidden=false}else toast('Connecté au Google Sheet')});
   }
   refreshForm();render();
