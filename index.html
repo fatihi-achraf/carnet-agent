@@ -125,6 +125,10 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
 .drawer .big{font-family:var(--f-mono);font-weight:600;font-size:2.2rem;line-height:1.1}
 .drawer .big small{font-size:1rem;color:var(--ink-2)}
 .drawer .strip b.pos{color:var(--ok)}
+.hday{margin-block-end:8px}.hday>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:48px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:.92rem}
+.hday>summary::-webkit-details-marker{display:none}.hday>summary b::before{content:"▸";display:inline-block;margin-inline-end:8px;color:var(--ink-2);transition:transform .15s}
+.hday[open]>summary b::before{transform:rotate(90deg)}.hday>summary span{color:var(--ink-2);font-size:.8rem}
+.hday[open]>summary{border-end-start-radius:0;border-end-end-radius:0}.hday>.ops{border-top:0;border-start-start-radius:0;border-start-end-radius:0}
 .hrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;padding:10px 12px;border-top:1px solid var(--line)}
 .hrow:first-child{border-top:0}
 .cc-top{display:flex;flex-wrap:wrap;gap:6px 18px;padding:12px;border-radius:12px;background:var(--surface-2)}
@@ -507,6 +511,7 @@ function localExtra(){
   });
   return out;
 }
+var histOpen={};
 function renderHist(){
   var on=connected();
   $('histCard').hidden=!on;$('ccCard').hidden=!on;
@@ -516,7 +521,14 @@ function renderHist(){
   (v.hist||[]).forEach(function(o){if(!seen[o.id]){seen[o.id]=1;rows.push(o)}});
   rows.sort(function(a,b){return b.s-a.s});
   $('histSum').textContent='Historique de la semaine ('+rows.length+')';
-  $('histBox').innerHTML=rows.length?'<ul class="ops">'+rows.slice(0,150).map(histRow).join('')+'</ul>':'<div class="empty"><strong>Aucun bon cette semaine.</strong></div>';
+  var grp={},dk=[];rows.slice(0,300).forEach(function(o){if(!grp[o.d]){grp[o.d]=[];dk.push(o.d)}grp[o.d].push(o)});
+  dk.sort().reverse();
+  $('histBox').innerHTML=rows.length?dk.map(function(d,ix){
+    var l=grp[d],tv=0,p=d.split('-').map(Number),wd=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][new Date(p[0],p[1]-1,p[2]).getDay()];
+    l.forEach(function(o){if(o.t==='vente')tv+=o.c});
+    var op=histOpen[d]!=null?histOpen[d]:(ix===0);
+    return '<details class="hday" data-d="'+d+'"'+(op?' open':'')+'><summary><b>'+wd+' '+dLabel(d)+'</b><span>'+l.length+' bon'+(l.length>1?'s':'')+(tv?' · Ventes '+fmt(tv):'')+'</span></summary><ul class="ops">'+l.map(histRow).join('')+'</ul></details>';
+  }).join(''):'<div class="empty"><strong>Aucun bon cette semaine.</strong></div>';
   renderCc();
 }
 var ccSel=null;
@@ -975,6 +987,7 @@ function init(){
   $('edMode').addEventListener('change',edRefresh);
   $('edCancel').addEventListener('click',closeEdit);
   $('edSave').addEventListener('click',saveEdit);
+  $('histBox').addEventListener('toggle',function(e){var d=e.target&&e.target.dataset&&e.target.dataset.d;if(d)histOpen[d]=e.target.open},true);
   $('editDlg').addEventListener('click',function(e){if(e.target===$('editDlg'))closeEdit()});
   document.addEventListener('click',function(e){
     var eb=e.target.closest('[data-hedit]');if(eb){openEdit(eb.dataset.hedit);return}
