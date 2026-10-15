@@ -37,7 +37,7 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:14px 48px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:14px 108px}
 .app{max-width:640px;margin-inline:auto;min-width:0;display:flex;flex-direction:column;gap:16px}
 h1,h2,h3,p{margin:0}
 button,input,textarea{font:inherit;color:inherit}
@@ -129,13 +129,21 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
 .hday>summary::-webkit-details-marker{display:none}.hday>summary b::before{content:"▸";display:inline-block;margin-inline-end:8px;color:var(--ink-2);transition:transform .15s}
 .hday[open]>summary b::before{transform:rotate(90deg)}.hday>summary span{color:var(--ink-2);font-size:.8rem}
 .hday[open]>summary{border-end-start-radius:0;border-end-end-radius:0}.hday>.ops{border-top:0;border-start-start-radius:0;border-start-end-radius:0}
+.ordb{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;width:100%;text-align:left;min-height:58px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
+.ordb small{display:block;color:var(--ink-2);font-size:.78rem}.ordb b.t{font-family:var(--f-mono);font-size:1.05rem;white-space:nowrap}
+.ordb .go{display:block;margin-block-start:2px;color:var(--ok);font-weight:600;font-size:.8rem}
+.ordl{display:flex;flex-direction:column;gap:8px}
+.paym{display:flex;flex-wrap:wrap;gap:8px}
+.paym button{min-height:48px;padding:0 18px;border:1.5px solid var(--line);border-radius:999px;background:var(--surface-2);color:var(--ink-2);font-weight:600}
+.paym button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.payamt{font-family:var(--f-mono);font-size:2rem;font-weight:600}
 .hrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start;padding:10px 12px;border-top:1px solid var(--line)}
 .hrow:first-child{border-top:0}
 .cc-top{display:flex;flex-wrap:wrap;gap:6px 18px;padding:12px;border-radius:12px;background:var(--surface-2)}
 .cc-top div{display:flex;flex-direction:column}.cc-top span{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-2);font-weight:600}.cc-top b{font-family:var(--f-mono);font-size:1.05rem}
 .cc-btn{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;min-height:46px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);text-align:left}
 .cc-btn small{font-family:var(--f-mono);white-space:nowrap;color:var(--ink-2)}
-.cc-btn.due small{color:var(--warn);font-weight:600}
+.advh{margin:8px 0 0;font-size:.85rem;font-weight:600;color:var(--ok);background:var(--ok-bg);border-radius:10px;padding:8px 10px}.advbox{background:var(--ok-bg);color:var(--ok);border-radius:12px;padding:10px 12px;font-weight:600;font-size:.92rem;margin-block:8px}.advbox button{margin-block-start:8px;min-height:44px;padding:0 16px;border:1.5px solid var(--ok);border-radius:999px;background:transparent;color:var(--ok);font-weight:700}.advbox button[aria-pressed=true]{background:var(--ok);color:#fff}.cc-btn.due small{color:var(--warn);font-weight:600}
 .pop{position:fixed;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:calc(70px + env(safe-area-inset-top,0px)) 24px 24px;pointer-events:none;z-index:20}
 .pop[hidden]{display:none}
 .pop>div{pointer-events:auto;width:min(88vw,360px);background:var(--surface);color:var(--ink);border-radius:18px;padding:24px 20px;text-align:center;box-shadow:0 20px 50px -10px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px;align-items:center}
@@ -143,7 +151,18 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
 .pop.warn i{background:var(--warn);}
 .pop b{font-family:var(--f-display);font-size:1.2rem}
 .pop span{color:var(--ink-2);font-size:.92rem}
-.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);max-width:min(92vw,520px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.9rem;font-weight:500;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:8}
+.top .l{display:flex;align-items:center;gap:12px;min-width:0}
+.top small.vn{display:block;font-size:.68rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2);margin-block-start:1px}
+#main[data-view=bon]>#ordCard,#main[data-view=bon]>#prodCard,#main[data-view=bon]>#clientsCard,#main[data-view=bon]>#connCard{display:none}
+#main[data-view=cmd]>:not(#ordCard){display:none}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:22;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabbar>div{max-width:640px;margin-inline:auto;display:grid;grid-template-columns:repeat(3,1fr)}
+.nv{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:60px;border:0;background:none;color:var(--ink-2);font-size:.72rem;font-weight:600;padding:0;min-width:0;position:relative;cursor:pointer}
+.nv svg{flex:none;color:inherit}
+.nv[aria-current=page]{color:var(--vente);box-shadow:inset 0 3px 0 var(--vente)}
+.nv .bdg{position:absolute;top:5px;left:calc(50% + 6px);min-width:20px;height:20px;border-radius:10px;background:var(--charge);color:#fff;font-size:.68rem;font-weight:700;display:grid;place-items:center;padding:0 5px}
+#main[data-view=reg]>:not(#prodCard):not(#clientsCard):not(#connCard){display:none}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);max-width:min(92vw,520px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.9rem;font-weight:500;opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;z-index:8}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media (prefers-reduced-motion: reduce){.toast{transition:none}}
 </style>
@@ -151,7 +170,8 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
 <body>
 <div class="app">
   <header class="top">
-    <h1>Carnet Agent</h1>
+    <div class="l">
+    <div><h1>Carnet Agent</h1><small class="vn" id="viewName">Nouveau bon</small></div></div>
     <div class="who" id="who" hidden><span>Agent : <b id="whoName"></b></span><button class="link" id="renameBtn" type="button">Changer</button></div>
   </header>
   <p class="notice" id="storeWarn" hidden>Ce navigateur ne garde pas tes bons après fermeture. Envoie-les au responsable tout de suite après les avoir notés.</p>
@@ -173,7 +193,7 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
     <button class="primary" id="nameSave" type="button">Enregistrer</button>
   </section>
 
-  <div id="main" hidden>
+  <div id="main" data-view="bon" hidden>
     <section class="card drawer" id="drawerCard" hidden style="margin-block-end:16px">
       <h2>Caisse en espèces <small id="drawerState"></small></h2>
       <div class="big" id="drawerBig"></div>
@@ -191,6 +211,11 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
         <p class="hint" id="dayLast"></p>
       </div>
     </section>
+    <section class="card" id="ordCard" hidden style="margin-block-end:16px">
+      <h2 id="ordT">Commandes à encaisser</h2>
+      <p class="hint">Les machinistes ont lancé ces commandes. Touche une commande quand le client paie : le montant est déjà rempli, tu choisis seulement le mode de paiement.</p>
+      <div class="ordl" id="ordBox"></div>
+    </section>
     <form class="card" id="bonForm" data-type="vente" novalidate>
       <div class="seg" role="radiogroup" aria-label="Type de bon">
         <input type="radio" name="type" id="t-vente" value="vente" checked><label for="t-vente">Vente</label>
@@ -203,7 +228,7 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
           <input type="radio" name="mode" id="m-especes" value="especes" checked><label for="m-especes">Espèces</label>
           <input type="radio" name="mode" id="m-virement" value="virement"><label for="m-virement">Virement</label>
           <input type="radio" name="mode" id="m-cheque" value="cheque"><label for="m-cheque">Chèque</label>
-          <input type="radio" name="mode" id="m-credit" value="credit"><label for="m-credit" id="lbl-credit">Crédit</label>
+          <input type="radio" name="mode" id="m-credit" value="credit"><label for="m-credit" id="lbl-credit">Crédit / avance</label>
         </div>
       </fieldset>
       <div class="field" id="productBox" hidden><label for="product" style="font-size:.72rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-2)">Produit (facultatif)</label>
@@ -217,6 +242,7 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
           <input id="clientQ" autocomplete="off" placeholder="Cherche ou écris le nom du client" aria-label="Chercher un client">
           <div class="cres" id="clientRes"></div>
         </div>
+        <p class="advh" id="advHint" hidden></p>
       </div>
       <label class="field"><span>Montant</span>
         <div class="money"><input id="amount" inputmode="decimal" autocomplete="off" placeholder="0,00" aria-describedby="formErr"><i>DH</i></div>
@@ -323,6 +349,16 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
     </section>
   </div>
 </div>
+<div class="dlg" id="payDlg" hidden role="dialog" aria-modal="true" aria-labelledby="payT"><div>
+  <h2 id="payT">Encaisser la commande</h2>
+  <p id="payWho" class="lbl"></p>
+  <div class="payamt" id="payAmt"></div>
+  <p class="hint" id="payDet"></p>
+  <div class="advbox" id="payAdv" hidden></div>
+  <div class="group" id="payModeGrp"><legend id="payModeLg">Mode de paiement</legend><div class="paym" id="payModes"></div></div>
+  <p class="err" id="payErr" role="alert" hidden></p>
+  <div class="acts"><button class="primary" id="payGo" type="button">Encaisser</button><button class="ghost" id="payCancel" type="button">Fermer</button></div>
+</div></div>
 <div class="dlg" id="editDlg" hidden role="dialog" aria-modal="true" aria-labelledby="edT"><div>
   <h2 id="edT">Modifier le bon</h2>
   <label class="field"><span>Montant</span><div class="money"><input id="edAmount" inputmode="decimal" autocomplete="off" placeholder="0,00"><i>DH</i></div></label>
@@ -334,6 +370,11 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
   <div class="acts"><button class="primary" id="edSave" type="button">Enregistrer</button><button class="ghost" id="edCancel" type="button">Annuler</button></div>
 </div></div>
 <div class="pop" id="pop" hidden role="alertdialog" aria-live="assertive" aria-labelledby="popT"><div><i id="popI">✓</i><b id="popT"></b><span id="popS"></span><button class="ghost" id="popOk" type="button" style="margin-top:8px;min-width:140px">OK</button></div></div>
+<nav class="tabbar" id="sidenav" aria-label="Sections"><div>
+  <button class="nv" id="nav-bon" type="button" data-v="bon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nouveau bon</button>
+  <button class="nv" id="nav-cmd" type="button" data-v="cmd"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4-9-4zM3 12l9 4 9-4M3 17l9 4 9-4"/></svg>Commandes<span class="bdg" id="cmdBadge" hidden></span></button>
+  <button class="nv" id="nav-reg" type="button" data-v="reg"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Réglages</button>
+</div></nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -426,7 +467,8 @@ function addDaysStr(s,n){var p=s.split('-').map(Number),d=new Date(Date.UTC(p[0]
 function hhmm(t){var d=new Date(t);return pad(d.getHours())+':'+pad(d.getMinutes())}
 function toServerOp(o){
   var x={id:o.i,type:o.t,mode:o.m,cents:o.c,label:o.l||'',date:o.d,ts:o.s,agent:data.agent};
-  if(o.n){x.client=clientId(o.n);x.clientName=o.n}
+  if(o.n){x.client=o.k||clientId(o.n);x.clientName=o.n}
+  if(o.ord)x.order=o.ord;
   if(o.p)x.product=o.p;
   return x;
 }
@@ -436,7 +478,7 @@ function applyView(v){
     if(!Array.isArray(x)||typeof x[0]!=='string')return;
     var n=cleanName(x[0]),id=clientId(n);
     if(n.length<2||!id)return;
-    next[id]={name:n,due:(Number.isInteger(x[1])&&x[1]>0)?x[1]:0};
+    next[id]={name:n,due:Number.isInteger(x[1])?x[1]:0};
   });
   pending().forEach(function(o){if(o.n)keep[clientId(o.n)]=1});
   Object.keys(data.clients).forEach(function(id){if(data.clients[id].local&&keep[id]&&!next[id])next[id]=data.clients[id]});
@@ -624,7 +666,7 @@ function render(){
   p.forEach(function(o){if(o.t==='vente')v+=o.c;else if(o.t==='reglement')rg+=o.c;else c+=o.c});
   $('strip').innerHTML='<div><span>Ventes</span><b class="v">'+fmt(v)+'</b></div><div><span>Charges</span><b class="c">'+fmt(c)+'</b></div>'+(rg?'<div><span>Règlements</span><b>'+fmt(rg)+'</b></div>':'')+'<div><span>Bons</span><b>'+p.length+'</b></div>';
   $('clientsSum').textContent='Liste des clients ('+clientsSorted().length+')'+(data.listAt?' · mise à jour le '+dLabel(new Date(data.listAt).toISOString().slice(0,10)):'');
-  renderClientPicker();
+  renderClientPicker();renderOrders();
   $('pendingBox').innerHTML=p.length?'<ul class="ops">'+p.slice().reverse().map(function(o){return rowHtml(o,true)}).join('')+'</ul>':'<div class="empty"><strong>Aucun bon à envoyer.</strong>Note une vente ou une charge ci-dessus. Elle reste sur ce téléphone jusqu’à l’envoi.</div>';
   var on=connected();
   $('sendBtn').disabled=on?syncing:!p.length;
@@ -648,28 +690,48 @@ function needsClient(){
   var type=document.querySelector('input[name=type]:checked').value,mode=document.querySelector('input[name=mode]:checked').value;
   return type==='reglement'||(type==='vente'&&mode==='credit');
 }
+function balOf(k){
+  var b=(data.clients[k]&&data.clients[k].due)||0;
+  pending().forEach(function(o){
+    if(o.t==='reglement'&&(o.k||(o.n&&clientId(o.n)))===k)b-=o.c;
+    else if(o.t==='vente'&&o.m==='credit'&&(o.k||(o.n&&clientId(o.n)))===k)b+=o.c;
+  });
+  return b;
+}
+function advHint(){
+  var h=$('advHint');if(!h)return;
+  var type=document.querySelector('input[name=type]:checked').value,mode=document.querySelector('input[name=mode]:checked').value;
+  var cents=parseMoney($('amount').value)||0,due=formClient?balOf(formClient):0,t='';
+  if(type==='reglement'){
+    if(!formClient)t='Pour une avance : choisis le client et écris le montant versé. Ce qui dépasse sa dette devient une avance.';
+    else if(cents>0&&cents>Math.max(0,due))t='Dont '+fmt(cents-Math.max(0,due))+' DH d’avance pour ce client.';
+    else if(due<0)t='Ce client a déjà '+fmt(due)+' DH d’avance.';
+  }else if(type==='vente'&&mode==='credit'&&due<0){
+    t='Avance disponible : '+fmt(due)+' DH (selon ta liste). La vente sera déduite de l’avance.';
+  }
+  h.hidden=!t;h.textContent=t;
+}
 function renderClientPicker(){
   var need=needsClient(),box=$('clientBox');
   box.hidden=!need;
   if(!need){formClient=null;return}
   var isR=document.querySelector('input[name=type]:checked').value==='reglement';
-  $('clientCap').textContent=isR?'Client qui règle (obligatoire)':'Client à crédit (obligatoire)';
+  $('clientCap').textContent=isR?'Client qui règle ou verse une avance (obligatoire)':'Client à crédit (obligatoire)';
   var sb=$('clientSel'),fd=$('clientFind');
   if(formClient&&data.clients[formClient]){
     var c=data.clients[formClient];
     sb.hidden=false;fd.hidden=true;
-    sb.innerHTML='<b>'+esc(c.name)+'</b>'+(c.due>0?'<span>doit '+fmt(c.due)+' DH (liste)</span>':'')+'<button type="button" class="mini" data-act="clientChange">Changer</button>';
-    return;
+    sb.innerHTML='<b>'+esc(c.name)+'</b>'+(balOf(formClient)>0?'<span>doit '+fmt(balOf(formClient))+' DH (liste)</span>':(balOf(formClient)<0?'<span>avance '+fmt(balOf(formClient))+' DH (liste)</span>':''))+'<button type="button" class="mini" data-act="clientChange">Changer</button>';
+    advHint();return;
   }
   formClient=null;sb.hidden=true;fd.hidden=false;
   var q=$('clientQ').value,qk=nameKey(q),all=clientsSorted(),html='';
   var matches=all.filter(function(c){return !qk||nameKey(c.name).indexOf(qk)>=0}).slice(0,6);
-  matches.forEach(function(c){html+='<button type="button" data-cid="'+esc(c.id)+'"><span>'+esc(c.name)+'</span><small>'+(c.due>0?'doit '+fmt(c.due):'')+'</small></button>'});
+  matches.forEach(function(c){html+='<button type="button" data-cid="'+esc(c.id)+'"><span>'+esc(c.name)+'</span><small>'+(balOf(c.id)>0?'doit '+fmt(balOf(c.id)):(balOf(c.id)<0?'avance '+fmt(balOf(c.id)):''))+'</small></button>'});
   var exact=qk&&all.some(function(c){return nameKey(c.name)===qk});
-  if(qk&&!exact&&!isR)html+='<button type="button" class="new" data-new="1">＋ Nouveau client « '+esc(cleanName(q))+' »</button>';
-  if(qk&&!matches.length&&isR)html+='<p class="hint">Aucun client de ce nom dans ta liste. Demande au responsable de te renvoyer la liste à jour.</p>';
+  if(qk&&!exact)html+='<button type="button" class="new" data-new="1">＋ Nouveau client « '+esc(cleanName(q))+' »</button>';
   if(!qk&&!matches.length)html+='<p class="hint">Ta liste est vide. Colle la liste du responsable (en bas), ou écris un nom pour créer un client.</p>';
-  $('clientRes').innerHTML=html;
+  $('clientRes').innerHTML=html;advHint();
 }
 function productList(){return (connected()&&data.view&&Array.isArray(data.view.products))?data.view.products:[]}
 function renderProducts(){
@@ -695,6 +757,7 @@ function saveProducts(list){
 }
 function prodFail(e){return e.code==='forbidden'||e.code==='action'?'Le script Google n’est pas à jour : demande au responsable de le mettre à jour.':(e.code==='network'?'Pas de connexion. Réessaie.':(e.message||'Erreur'))}
 function refreshForm(){
+  setTimeout(function(){try{advHint()}catch(e){}},0);
   var type=document.querySelector('input[name=type]:checked').value;
   var mode=document.querySelector('input[name=mode]:checked').value;
   var credOk=type==='vente';
@@ -751,9 +814,9 @@ if('serviceWorker' in navigator&&location.protocol!=='file:'){
 var edSrc=null;
 function findSrc(id){
   var lo=data.ops.find(function(o){return o.i===id});
-  if(lo)return {id:id,t:lo.t,m:lo.m,c:lo.c,l:lo.l||'',n:lo.n||'',k:lo.n?clientId(lo.n):'',p:lo.p||'',local:lo,sent:!!lo.sent};
+  if(lo)return {id:id,t:lo.t,m:lo.m,c:lo.c,l:lo.l||'',n:lo.n||'',k:lo.n?(lo.k||clientId(lo.n)):'',p:lo.p||'',local:lo,sent:!!lo.sent,ord:lo.ord||''};
   var h=((data.view&&data.view.hist)||[]).find(function(o){return o.id===id});
-  if(h)return {id:id,t:h.t,m:h.m,c:h.c,l:h.l||'',n:h.n||'',k:h.k||'',p:h.p||'',local:null,sent:true};
+  if(h)return {id:id,t:h.t,m:h.m,c:h.c,l:h.l||'',n:h.n||'',k:h.k||'',p:h.p||'',local:null,sent:true,ord:h.r||''};
   return null;
 }
 function edNeedClient(){var t=edSrc.t,m=$('edMode').value;return t==='reglement'||(t==='vente'&&m==='credit')}
@@ -778,6 +841,7 @@ function openEdit(id){
   $('edProduct').innerHTML='<option value="">— Sans produit —</option>'+pl.map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>'}).join('');
   $('edProduct').value=s.p||'';
   $('edLabel').value=s.l||'';
+  $('edAmount').readOnly=!!s.ord;$('edAmount').title=s.ord?'Le montant vient de la commande : il ne se modifie pas.':'';
   $('edErr').hidden=true;edRefresh();
   $('editDlg').hidden=false;$('edAmount').focus();
 }
@@ -788,6 +852,7 @@ function saveEdit(){
   var cents=parseMoney($('edAmount').value),mode=$('edMode').value,t=edSrc.t,label=$('edLabel').value.trim();
   if(cents==null||cents<=0){err('Écris un montant supérieur à zéro.');return}
   if(cents>1000000000){err('Montant trop grand.');return}
+  if(edSrc.ord&&cents!==edSrc.c){err('Le montant vient de la commande : il ne se modifie pas.');return}
   var needLbl=t==='charge'||(t==='vente'&&mode!=='especes'&&mode!=='credit');
   if(needLbl&&!label){err(t==='charge'?'Écris le détail de la charge.':'Écris le client ou une référence pour ce mode de paiement.');return}
   var needCl=edNeedClient(),cid=needCl?$('edClient').value:'',cname='';
@@ -818,6 +883,71 @@ function delOwn(id){
     data.ops=data.ops.filter(function(o){return o.i!==id});save();toast('Bon supprimé');render();return syncNow();
   }).catch(function(e){toast(e.code==='forbidden'?'Tu ne peux supprimer que tes propres bons.':(e.code==='network'?'Pas de connexion. Réessaie.':'Suppression impossible'));render()});
 }
+
+/* ---------- commandes à encaisser ---------- */
+var payId=null,payMode='especes';
+function paidLocal(){var m={};data.ops.forEach(function(o){if(o.ord)m[o.ord]=1});return m}
+function openOrders(){var pl=paidLocal();return ((data.view&&data.view.orders)||[]).filter(function(o){return !pl[o.id]})}
+function renderOrders(){
+  var on=connected(),l=on?openOrders():[],c=$('ordCard');
+  updBadge(l.length);
+  c.hidden=false;
+  $('ordT').textContent='Commandes à encaisser'+(l.length?' ('+l.length+')':'');
+  if(!on||!l.length){$('ordBox').innerHTML='<div class="empty"><strong>'+(on?'Aucune commande à encaisser.':'Connecte la Google Sheet.')+'</strong>'+(on?'Quand une machiniste lance une commande, elle apparaît ici.':'Les commandes des machinistes arrivent par la Google Sheet (menu Réglages).')+'</div>';return}
+  $('ordBox').innerHTML=l.map(function(o){
+    var t=new Date(o.s);
+    return '<button type="button" class="ordb" data-ord="'+esc(o.id)+'"><span><b>'+esc(o.n)+'</b> · '+esc(o.p)+'<small>'+nfq.format(o.q)+(o.u?' '+esc(o.u):'')+' × '+fmt(o.pr)+' DH · '+pad(t.getHours())+':'+pad(t.getMinutes())+' · '+esc(o.by)+'</small><span class="go">Encaisser ›</span></span><b class="t">'+fmt(o.t)+'</b></button>';
+  }).join('');
+}
+var nfq=new Intl.NumberFormat('fr-FR',{maximumFractionDigits:3});
+var VN={bon:'Nouveau bon',cmd:'Commandes',reg:'Réglages'};
+function updBadge(n){var b=$('cmdBadge');b.hidden=!n;b.textContent=n}
+function setView(v){
+  $('main').dataset.view=v;$('viewName').textContent=VN[v];
+  document.querySelectorAll('.nv').forEach(function(b){if(b.dataset.v===v)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  window.scrollTo(0,0);
+}
+function openPay(id){
+  var o=openOrders().find(function(x){return x.id===id});if(!o)return;
+  payId=id;payMode='especes';payUse=avOf(o)>0;
+  $('payWho').innerHTML='<b>'+esc(o.n)+'</b> · '+esc(o.p);
+  $('payAmt').textContent=fmt(o.t)+' DH';
+  $('payDet').textContent=nfq.format(o.q)+(o.u?' '+o.u:'')+' × '+fmt(o.pr)+' DH · lancée par '+o.by;
+  $('payErr').hidden=true;renderPayModes();$('payDlg').hidden=false;
+}
+var payUse=false;
+function avOf(o){var k=o.k||clientId(o.n);return Math.max(0,-balOf(k))}
+function renderPayModes(){
+  var o=openOrders().find(function(x){return x.id===payId}),box=$('payAdv'),grp=$('payModeGrp');
+  var av=o?avOf(o):0;
+  if(o&&av>0){
+    var use=Math.min(av,o.t),rest=o.t-use;
+    box.hidden=false;
+    box.innerHTML='Ce client a '+fmt(av)+' DH d’avance.<br><button type="button" data-padv="1" aria-pressed="'+(payUse?'true':'false')+'">'+(payUse?'✓ ':'')+'Utiliser l’avance</button>'+(payUse?'<div style="font-weight:500;margin-top:6px">'+(rest>0?'Avance utilisée : '+fmt(use)+' DH. Reste à payer : <b>'+fmt(rest)+' DH</b>.':'Payé entièrement par l’avance. Il restera '+fmt(av-use)+' DH d’avance.')+'</div>':'');
+    grp.hidden=payUse&&rest<=0;
+    $('payModeLg').textContent=payUse?'Mode de paiement du reste':'Mode de paiement';
+  }else{box.hidden=true;grp.hidden=false;$('payModeLg').textContent='Mode de paiement'}
+
+  $('payModes').innerHTML=['especes','virement','cheque','credit'].map(function(k){return '<button type="button" data-pm="'+k+'" aria-pressed="'+(k===payMode?'true':'false')+'">'+MODES[k]+'</button>'}).join('');
+}
+function closePay(){$('payDlg').hidden=true;payId=null}
+function confirmPay(){
+  var o=openOrders().find(function(x){return x.id===payId});if(!o){closePay();return}
+  var av=avOf(o),useAdv=payUse&&av>0,use=useAdv?Math.min(av,o.t):0,rest=o.t-use,pm=useAdv?'credit':payMode;
+  var nop={i:newId(),t:'vente',m:pm,c:o.t,l:cleanName(o.n).slice(0,120),d:todayStr(),s:Date.now(),sent:false,ord:o.id,p:o.p};
+  if(pm==='credit'){nop.n=cleanName(o.n);nop.k=o.k||clientId(o.n)}
+  data.ops.push(nop);
+  if(useAdv&&rest>0&&payMode!=='credit'){
+    data.ops.push({i:newId(),t:'reglement',m:payMode,c:rest,l:'Reste commande '+o.p,d:todayStr(),s:Date.now()+1,sent:false,n:cleanName(o.n),k:o.k||clientId(o.n)});
+  }save();closePay();closeSendPanel();setView('bon');render();
+  if(connected()){
+    showPop('Encaissé ✓',fmt(o.t)+' DH · '+(useAdv?(rest>0?'avance '+fmt(use)+' + '+MODES[payMode]+' '+fmt(rest):'payé par l’avance'):MODES[payMode])+' · '+o.n);
+    clearTimeout(syncT);
+    syncNow(false).then(function(){
+      if(pending().some(function(x){return x.i===nop.i}))showPop('Enregistré sur le téléphone','Pas de connexion pour l’instant : il partira tout seul dès qu’il y a internet.',true);
+    });
+  }
+}
 function init(){
   load();
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(function(){})}catch(e){}
@@ -837,6 +967,7 @@ function init(){
     data.agent=n.slice(0,40);save();render();queueSync();
   }
   $('nameSave').addEventListener('click',saveName);
+  document.querySelectorAll('.nv').forEach(function(b){b.addEventListener('click',function(){setView(b.dataset.v)})});
   $('nameInput').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();saveName()}});
   $('renameBtn').addEventListener('click',function(){
     $('nameInput').value=data.agent;data.agent='';render();$('nameInput').focus();
@@ -927,6 +1058,7 @@ function init(){
   $('sentNo').addEventListener('click',closeSendPanel);
 
   $('clientQ').addEventListener('input',renderClientPicker);
+  $('amount').addEventListener('input',advHint);
   $('clientRes').addEventListener('click',function(e){
     var b=e.target.closest('button');
     if(!b)return;
@@ -953,7 +1085,7 @@ function init(){
       if(!Array.isArray(x)||typeof x[0]!=='string')return;
       var n=cleanName(x[0]),id=clientId(n);
       if(n.length<2||!id)return;
-      next[id]={name:n,due:(Number.isInteger(x[1])&&x[1]>0)?x[1]:0};
+      next[id]={name:n,due:Number.isInteger(x[1])?x[1]:0};
     });
     var kept=0;
     Object.keys(data.clients).forEach(function(id){if(data.clients[id].local&&!next[id]){next[id]=data.clients[id];kept++}});
@@ -988,12 +1120,17 @@ function init(){
   $('edCancel').addEventListener('click',closeEdit);
   $('edSave').addEventListener('click',saveEdit);
   $('histBox').addEventListener('toggle',function(e){var d=e.target&&e.target.dataset&&e.target.dataset.d;if(d)histOpen[d]=e.target.open},true);
+  $('ordBox').addEventListener('click',function(e){var b=e.target.closest('[data-ord]');if(b)openPay(b.dataset.ord)});
+  $('payAdv').addEventListener('click',function(e){if(e.target.closest('[data-padv]')){payUse=!payUse;renderPayModes()}});
+  $('payModes').addEventListener('click',function(e){var b=e.target.closest('[data-pm]');if(!b)return;payMode=b.dataset.pm;renderPayModes()});
+  $('payGo').addEventListener('click',confirmPay);$('payCancel').addEventListener('click',closePay);
+  $('payDlg').addEventListener('click',function(e){if(e.target===$('payDlg'))closePay()});
   $('editDlg').addEventListener('click',function(e){if(e.target===$('editDlg'))closeEdit()});
   document.addEventListener('click',function(e){
     var eb=e.target.closest('[data-hedit]');if(eb){openEdit(eb.dataset.hedit);return}
     var db=e.target.closest('[data-hdel]');if(db){delOwn(db.dataset.hdel);return}
   });
-  $('prodManage').addEventListener('click',function(){var d=$('prodDet');d.open=true;d.scrollIntoView({block:'center'})});
+  $('prodManage').addEventListener('click',function(){setView('reg');var d=$('prodDet');d.open=true;d.scrollIntoView({block:'center'})});
   $('prodAdd').addEventListener('click',function(){
     var n=String($('prodName').value||'').replace(/\s+/g,' ').trim().slice(0,40),er=$('prodErr');er.hidden=true;
     if(n.length<2){er.textContent='Écris le nom du produit.';er.hidden=false;return}
@@ -1015,7 +1152,7 @@ function init(){
       if(msg){er.textContent=msg;er.hidden=false}else{$('connText').value=''}
     });
   });
-  $('drawerNote').addEventListener('click',function(e){if(e.target.id==='drawerConn'){$('connDet').open=true;$('connDet').scrollIntoView({block:'center'});$('connText').focus()}});
+  $('drawerNote').addEventListener('click',function(e){if(e.target.id==='drawerConn'){setView('reg');$('connDet').open=true;$('connDet').scrollIntoView({block:'center'});$('connText').focus()}});
   $('ccBox').addEventListener('click',function(e){var b=e.target.closest('[data-cc]');if(!b)return;ccSel=b.dataset.cc||null;$('ccQ').hidden=!!ccSel;renderCc()});
   $('ccQ').addEventListener('input',renderCc);
   $('popOk').addEventListener('click',function(){$('pop').hidden=true;$('amount').focus()});
@@ -1029,7 +1166,7 @@ function init(){
     var code=decodeURIComponent(hm[1]);if(code.indexOf('CONN1:')!==0)code='CONN1:'+code;
     /* le lien garde son code : l'icône ajoutée à l'écran d'accueil (iPhone) repart avec le même lien et se reconnecte seule */
     pinManifestToLink();
-    connectWith(code,function(msg){if(msg){$('connDet').open=true;$('connErr').textContent=msg;$('connErr').hidden=false}else toast('Connecté au Google Sheet')});
+    connectWith(code,function(msg){if(msg){setView('reg');$('connDet').open=true;$('connErr').textContent=msg;$('connErr').hidden=false}else toast('Connecté au Google Sheet')});
   }
   refreshForm();render();
   if(connected())syncNow(false);
