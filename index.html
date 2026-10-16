@@ -128,7 +128,7 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
 .hday{margin-block-end:8px}.hday>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:48px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:.92rem}
 .hday>summary::-webkit-details-marker{display:none}.hday>summary b::before{content:"▸";display:inline-block;margin-inline-end:8px;color:var(--ink-2);transition:transform .15s}
 .hday[open]>summary b::before{transform:rotate(90deg)}.hday>summary span{color:var(--ink-2);font-size:.8rem}
-.hday[open]>summary{border-end-start-radius:0;border-end-end-radius:0}.hday>.ops{border-top:0;border-start-start-radius:0;border-start-end-radius:0}
+.hday[open]>summary{border-end-start-radius:0;border-end-end-radius:0}.hday>.ordl{padding:8px;border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px;display:grid;gap:8px}.hday>.ops{border-top:0;border-start-start-radius:0;border-start-end-radius:0}
 .ordb{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;width:100%;text-align:left;min-height:58px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2)}
 .ordb small{display:block;color:var(--ink-2);font-size:.78rem}.ordb b.t{font-family:var(--f-mono);font-size:1.05rem;white-space:nowrap}
 .ordb .go{display:block;margin-block-start:2px;color:var(--ok);font-weight:600;font-size:.8rem}
@@ -899,11 +899,19 @@ function renderOrders(){
   $('ordT').textContent='Commandes à encaisser'+(all.length?' ('+all.length+')':'');
   if(on&&all.length&&!l.length){$('ordBox').innerHTML='<div class="empty"><strong>Aucune commande trouvée.</strong>Aucune commande à encaisser ne correspond à « '+esc($('ordQ').value.trim())+' ».</div>';return}
   if(!on||!l.length){$('ordBox').innerHTML='<div class="empty"><strong>'+(on?'Aucune commande à encaisser.':'Connecte la Google Sheet.')+'</strong>'+(on?'Quand une machiniste lance une commande, elle apparaît ici.':'Les commandes des machinistes arrivent par la Google Sheet (menu Réglages).')+'</div>';return}
-  $('ordBox').innerHTML=l.map(function(o){
+  var grp={},keys=[];l.forEach(function(o){var d=o.d||todayStr();if(!grp[d]){grp[d]=[];keys.push(d)}grp[d].push(o)});
+  keys.sort().reverse();
+  $('ordBox').innerHTML=keys.map(function(d,ix){
+    var g=grp[d],tot=0;g.forEach(function(o){tot+=o.t});
+    var dp=d.split('-').map(Number),wd=['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'][new Date(dp[0],dp[1]-1,dp[2]).getDay()];
+    var op=oq?true:(ordOpen[d]!=null?ordOpen[d]:ix===0);
+    return '<details class="hday" data-od="'+d+'"'+(op?' open':'')+'><summary><b>'+wd+' '+dLabel(d)+'</b><span>'+g.length+' commande'+(g.length>1?'s':'')+' · '+fmt(tot)+' DH</span></summary><div class="ordl">'+g.map(function(o){
     var t=new Date(o.s);
     return '<button type="button" class="ordb" data-ord="'+esc(o.id)+'"><span><b>'+esc(o.n)+'</b> · '+esc(o.p)+'<small>'+nfq.format(o.q)+(o.u?' '+esc(o.u):'')+' × '+fmt(o.pr)+' DH · '+pad(t.getHours())+':'+pad(t.getMinutes())+' · '+esc(o.by)+'</small>'+(o.nt?'<small>📝 '+esc(o.nt)+'</small>':'')+'<span class="go">Encaisser ›</span></span><b class="t">'+fmt(o.t)+'</b></button>';
+    }).join('')+'</div></details>';
   }).join('');
 }
+var ordOpen={};
 var nfq=new Intl.NumberFormat('fr-FR',{maximumFractionDigits:3});
 var VN={bon:'Nouveau bon',cmd:'Commandes',reg:'Réglages'};
 function updBadge(n){var b=$('cmdBadge');b.hidden=!n;b.textContent=n}
@@ -1134,6 +1142,7 @@ function init(){
   $('payModes').addEventListener('click',function(e){var b=e.target.closest('[data-pm]');if(!b)return;payMode=b.dataset.pm;renderPayModes()});
   $('payAmt').addEventListener('input',renderPayModes);
   $('ordQ').addEventListener('input',renderOrders);
+  $('ordBox').addEventListener('toggle',function(e){var d=e.target&&e.target.dataset&&e.target.dataset.od;if(d&&!$('ordQ').value.trim())ordOpen[d]=e.target.open},true);
   $('payGo').addEventListener('click',confirmPay);$('payCancel').addEventListener('click',closePay);
   $('payDlg').addEventListener('click',function(e){if(e.target===$('payDlg'))closePay()});
   $('editDlg').addEventListener('click',function(e){if(e.target===$('editDlg'))closeEdit()});
