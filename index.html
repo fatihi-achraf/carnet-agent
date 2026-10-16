@@ -214,6 +214,7 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
     <section class="card" id="ordCard" hidden style="margin-block-end:16px">
       <h2 id="ordT">Commandes à encaisser</h2>
       <p class="hint">Les machinistes ont lancé ces commandes. Touche une commande quand le client paie : le montant est déjà rempli, tu choisis seulement le mode de paiement.</p>
+      <input id="ordQ" type="search" autocomplete="off" placeholder="Chercher un client, un produit ou une note" aria-label="Chercher une commande" style="min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);width:100%">
       <div class="ordl" id="ordBox"></div>
     </section>
     <form class="card" id="bonForm" data-type="vente" novalidate>
@@ -352,7 +353,8 @@ details summary{cursor:pointer;font-weight:600;min-height:32px;display:flex;alig
 <div class="dlg" id="payDlg" hidden role="dialog" aria-modal="true" aria-labelledby="payT"><div>
   <h2 id="payT">Encaisser la commande</h2>
   <p id="payWho" class="lbl"></p>
-  <div class="payamt" id="payAmt"></div>
+  <label class="field"><span>Montant à encaisser</span><div class="money"><input id="payAmt" inputmode="decimal" autocomplete="off" placeholder="0,00"><i>DH</i></div></label>
+  <p class="hint" style="margin-block-start:-6px">Tu peux changer le montant si le client paie une autre somme.</p>
   <p class="hint" id="payDet"></p>
   <div class="advbox" id="payAdv" hidden></div>
   <div class="group" id="payModeGrp"><legend id="payModeLg">Mode de paiement</legend><div class="paym" id="payModes"></div></div>
@@ -889,14 +891,17 @@ var payId=null,payMode='especes';
 function paidLocal(){var m={};data.ops.forEach(function(o){if(o.ord)m[o.ord]=1});return m}
 function openOrders(){var pl=paidLocal();return ((data.view&&data.view.orders)||[]).filter(function(o){return !pl[o.id]})}
 function renderOrders(){
-  var on=connected(),l=on?openOrders():[],c=$('ordCard');
-  updBadge(l.length);
+  var on=connected(),all=on?openOrders():[],c=$('ordCard');
+  var oq=nameKey($('ordQ')?$('ordQ').value:''),l=oq?all.filter(function(o){return nameKey(o.n+' '+o.p+' '+(o.nt||'')).indexOf(oq)>=0}):all;
+  updBadge(all.length);
   c.hidden=false;
-  $('ordT').textContent='Commandes à encaisser'+(l.length?' ('+l.length+')':'');
+  $('ordQ').hidden=!on||!all.length;
+  $('ordT').textContent='Commandes à encaisser'+(all.length?' ('+all.length+')':'');
+  if(on&&all.length&&!l.length){$('ordBox').innerHTML='<div class="empty"><strong>Aucune commande trouvée.</strong>Aucune commande à encaisser ne correspond à « '+esc($('ordQ').value.trim())+' ».</div>';return}
   if(!on||!l.length){$('ordBox').innerHTML='<div class="empty"><strong>'+(on?'Aucune commande à encaisser.':'Connecte la Google Sheet.')+'</strong>'+(on?'Quand une machiniste lance une commande, elle apparaît ici.':'Les commandes des machinistes arrivent par la Google Sheet (menu Réglages).')+'</div>';return}
   $('ordBox').innerHTML=l.map(function(o){
     var t=new Date(o.s);
-    return '<button type="button" class="ordb" data-ord="'+esc(o.id)+'"><span><b>'+esc(o.n)+'</b> · '+esc(o.p)+'<small>'+nfq.format(o.q)+(o.u?' '+esc(o.u):'')+' × '+fmt(o.pr)+' DH · '+pad(t.getHours())+':'+pad(t.getMinutes())+' · '+esc(o.by)+'</small><span class="go">Encaisser ›</span></span><b class="t">'+fmt(o.t)+'</b></button>';
+    return '<button type="button" class="ordb" data-ord="'+esc(o.id)+'"><span><b>'+esc(o.n)+'</b> · '+esc(o.p)+'<small>'+nfq.format(o.q)+(o.u?' '+esc(o.u):'')+' × '+fmt(o.pr)+' DH · '+pad(t.getHours())+':'+pad(t.getMinutes())+' · '+esc(o.by)+'</small>'+(o.nt?'<small>📝 '+esc(o.nt)+'</small>':'')+'<span class="go">Encaisser ›</span></span><b class="t">'+fmt(o.t)+'</b></button>';
   }).join('');
 }
 var nfq=new Intl.NumberFormat('fr-FR',{maximumFractionDigits:3});
@@ -910,18 +915,19 @@ function setView(v){
 function openPay(id){
   var o=openOrders().find(function(x){return x.id===id});if(!o)return;
   payId=id;payMode='especes';payUse=avOf(o)>0;
-  $('payWho').innerHTML='<b>'+esc(o.n)+'</b> · '+esc(o.p);
-  $('payAmt').textContent=fmt(o.t)+' DH';
+  $('payWho').innerHTML='<b>'+esc(o.n)+'</b> · '+esc(o.p)+(o.nt?'<br><small>📝 '+esc(o.nt)+'</small>':'');
+  $('payAmt').value=(o.t/100).toFixed(2).replace(/\.00$/,'').replace('.',',');
   $('payDet').textContent=nfq.format(o.q)+(o.u?' '+o.u:'')+' × '+fmt(o.pr)+' DH · lancée par '+o.by;
   $('payErr').hidden=true;renderPayModes();$('payDlg').hidden=false;
 }
 var payUse=false;
+function payTot(o){var v=parseMoney($('payAmt').value);return v>0?v:(o?o.t:0)}
 function avOf(o){var k=o.k||clientId(o.n);return Math.max(0,-balOf(k))}
 function renderPayModes(){
   var o=openOrders().find(function(x){return x.id===payId}),box=$('payAdv'),grp=$('payModeGrp');
   var av=o?avOf(o):0;
   if(o&&av>0){
-    var use=Math.min(av,o.t),rest=o.t-use;
+    var T=payTot(o),use=Math.min(av,T),rest=T-use;
     box.hidden=false;
     box.innerHTML='Ce client a '+fmt(av)+' DH d’avance.<br><button type="button" data-padv="1" aria-pressed="'+(payUse?'true':'false')+'">'+(payUse?'✓ ':'')+'Utiliser l’avance</button>'+(payUse?'<div style="font-weight:500;margin-top:6px">'+(rest>0?'Avance utilisée : '+fmt(use)+' DH. Reste à payer : <b>'+fmt(rest)+' DH</b>.':'Payé entièrement par l’avance. Il restera '+fmt(av-use)+' DH d’avance.')+'</div>':'');
     grp.hidden=payUse&&rest<=0;
@@ -933,15 +939,18 @@ function renderPayModes(){
 function closePay(){$('payDlg').hidden=true;payId=null}
 function confirmPay(){
   var o=openOrders().find(function(x){return x.id===payId});if(!o){closePay();return}
-  var av=avOf(o),useAdv=payUse&&av>0,use=useAdv?Math.min(av,o.t):0,rest=o.t-use,pm=useAdv?'credit':payMode;
-  var nop={i:newId(),t:'vente',m:pm,c:o.t,l:cleanName(o.n).slice(0,120),d:todayStr(),s:Date.now(),sent:false,ord:o.id,p:o.p};
+  var T=parseMoney($('payAmt').value),er=$('payErr');
+  if(!(T>0)||T>1000000000){er.textContent='Écris le montant à encaisser.';er.hidden=false;return}
+  er.hidden=true;
+  var av=avOf(o),useAdv=payUse&&av>0,use=useAdv?Math.min(av,T):0,rest=T-use,pm=useAdv?'credit':payMode;
+  var nop={i:newId(),t:'vente',m:pm,c:T,l:cleanName(o.nt||'').slice(0,120),d:todayStr(),s:Date.now(),sent:false,ord:o.id,p:o.p};
   if(pm==='credit'){nop.n=cleanName(o.n);nop.k=o.k||clientId(o.n)}
   data.ops.push(nop);
   if(useAdv&&rest>0&&payMode!=='credit'){
     data.ops.push({i:newId(),t:'reglement',m:payMode,c:rest,l:'Reste commande '+o.p,d:todayStr(),s:Date.now()+1,sent:false,n:cleanName(o.n),k:o.k||clientId(o.n)});
   }save();closePay();closeSendPanel();setView('bon');render();
   if(connected()){
-    showPop('Encaissé ✓',fmt(o.t)+' DH · '+(useAdv?(rest>0?'avance '+fmt(use)+' + '+MODES[payMode]+' '+fmt(rest):'payé par l’avance'):MODES[payMode])+' · '+o.n);
+    showPop('Encaissé ✓',fmt(T)+' DH · '+(useAdv?(rest>0?'avance '+fmt(use)+' + '+MODES[payMode]+' '+fmt(rest):'payé par l’avance'):MODES[payMode])+' · '+o.n);
     clearTimeout(syncT);
     syncNow(false).then(function(){
       if(pending().some(function(x){return x.i===nop.i}))showPop('Enregistré sur le téléphone','Pas de connexion pour l’instant : il partira tout seul dès qu’il y a internet.',true);
@@ -1123,6 +1132,8 @@ function init(){
   $('ordBox').addEventListener('click',function(e){var b=e.target.closest('[data-ord]');if(b)openPay(b.dataset.ord)});
   $('payAdv').addEventListener('click',function(e){if(e.target.closest('[data-padv]')){payUse=!payUse;renderPayModes()}});
   $('payModes').addEventListener('click',function(e){var b=e.target.closest('[data-pm]');if(!b)return;payMode=b.dataset.pm;renderPayModes()});
+  $('payAmt').addEventListener('input',renderPayModes);
+  $('ordQ').addEventListener('input',renderOrders);
   $('payGo').addEventListener('click',confirmPay);$('payCancel').addEventListener('click',closePay);
   $('payDlg').addEventListener('click',function(e){if(e.target===$('payDlg'))closePay()});
   $('editDlg').addEventListener('click',function(e){if(e.target===$('editDlg'))closeEdit()});
