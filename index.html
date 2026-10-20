@@ -482,11 +482,20 @@ function buildMessage(ops){
 
 function pending(){return data.ops.filter(function(o){return !o.sent}).sort(function(a,b){return a.s-b.s})}
 function sentOps(){return data.ops.filter(function(o){return o.sent}).sort(function(a,b){return b.s-a.s})}
+var pvIx=null,pvSrc=null;
+function pvOf(o){
+  if(!(o.m==='virement'&&(o.t==='vente'||o.t==='reglement'))||o.aux)return false;
+  var v=data.view,id=o.id||o.i;
+  if(!v||!v.hist)return true;
+  if(pvSrc!==v.hist){pvSrc=v.hist;pvIx={};v.hist.forEach(function(h){pvIx[h.id]=h.v?1:0})}
+  return pvIx[id]===undefined?true:!!pvIx[id];
+}
+var PV_TAG='<span class="tag credit">⏳ À valider</span>';
 function rowHtml(o,canDel){
   var isV=o.t==='vente',isR=o.t==='reglement',t=new Date(o.s);
   var act=canDel?'<button type="button" class="mini" data-hedit="'+esc(o.i)+'">Modifier</button><button type="button" class="mini'+(armed===o.i?' arm':'')+'" data-del="'+esc(o.i)+'">'+(armed===o.i?'Confirmer la suppression ?':'Supprimer')+'</button>':(o.sent&&connected()?ownBtns(o.i):'');
   var lbl=o.n?'<b>'+esc(o.n)+'</b>'+(o.l?' · '+esc(o.l):''):(esc(o.l)||typeLabel(o.t));
-  var tag=(o.m==='credit'?'<span class="tag credit">Crédit</span>':((o.m!=='especes'||isR)?'<span class="tag'+(isR?' rg':'')+'">'+MODES[o.m]+'</span>':''))+(o.p?'<span class="tag">'+esc(o.p)+'</span>':'');
+  var tag=(o.m==='credit'?'<span class="tag credit">Crédit</span>':((o.m!=='especes'||isR)?'<span class="tag'+(isR?' rg':'')+'">'+MODES[o.m]+'</span>':''))+(o.p?'<span class="tag">'+esc(o.p)+'</span>':'')+(pvOf(o)?PV_TAG:'');
   return '<li class="op '+(isR?'reglement':(isV?'vente':'charge'))+'"><div><div class="lbl">'+lbl+'</div><div class="meta"><span>'+dLabel(o.d)+' · '+pad(t.getHours())+':'+pad(t.getMinutes())+' · '+typeLabel(o.t)+'</span>'+tag+act+'</div></div><div class="amt">'+(isV||isR?'+':'−')+fmt(o.c)+'</div></li>';
 }
 /* ---- Google Sheet : connexion, synchro, caisse en espèces ---- */
@@ -583,7 +592,7 @@ function ownBtns(id){
 function histRow(o){
   var r=o.t==='reglement',t=new Date(o.s);
   var who=(o.n?'<b>'+esc(o.n)+'</b>':'')+(o.l?(o.n?' · ':'')+esc(o.l):'')||typeLabel(o.t);
-  var tag=(o.m==='credit'?'<span class="tag credit">Crédit</span>':((o.m!=='especes'||r)?'<span class="tag'+(r?' rg':'')+'">'+(MODES[o.m]||o.m)+'</span>':''))+(o.p?'<span class="tag">'+esc(o.p)+'</span>':'');
+  var tag=(o.m==='credit'?'<span class="tag credit">Crédit</span>':((o.m!=='especes'||r)?'<span class="tag'+(r?' rg':'')+'">'+(MODES[o.m]||o.m)+'</span>':''))+(o.p?'<span class="tag">'+esc(o.p)+'</span>':'')+(pvOf(o)?PV_TAG:'');
   return '<li class="hrow op '+(r?'reglement':'vente')+'" style="display:grid"><div><div class="lbl">'+who+'</div><div class="meta"><span>'+dLabel(o.d)+(o.s?' · '+pad(t.getHours())+':'+pad(t.getMinutes()):'')+' · '+typeLabel(o.t)+(o.a?' · '+esc(o.a):'')+'</span>'+tag+(connected()&&o.a&&o.a===data.agent?ownBtns(o.id):'')+'</div></div><div class="amt">+'+fmt(o.c)+'</div></li>';
 }
 function localExtra(){
@@ -1126,7 +1135,7 @@ function confirmPay(){
   var os=o.orders||[o],sum=0;os.forEach(function(x){sum+=x.t});
   var nop=null,left=T,leftU=use,seq=0,cid=o.k||cidOf(o.n);
   function mk(x,m,c,withK,aux){
-    var op={i:newId(),t:'vente',m:m,c:c,l:cleanName(x.nt||'').slice(0,120),d:todayStr(),s:Date.now()+(seq++),sent:false,ord:x.id,p:x.p,n:cleanName(o.n)};
+    var op={i:newId(),t:'vente',m:m,c:c,l:(nfq.format(x.q)+(x.u?' '+x.u:'')+' × '+fmt(x.pr)+' DH'+(x.nt?' · '+cleanName(x.nt):'')).slice(0,120),d:todayStr(),s:Date.now()+(seq++),sent:false,ord:x.id,p:x.p,n:cleanName(o.n)};
     if(withK)op.k=cid;
     if(aux){op.aux=aux;op.l='Avance utilisée'}
     data.ops.push(op);if(!nop)nop=op;return op;
