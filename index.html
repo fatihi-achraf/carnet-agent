@@ -495,6 +495,10 @@ function rowHtml(o,canDel){
   var isV=o.t==='vente',isR=o.t==='reglement',t=new Date(o.s);
   var act=canDel?'<button type="button" class="mini" data-hedit="'+esc(o.i)+'">Modifier</button><button type="button" class="mini'+(armed===o.i?' arm':'')+'" data-del="'+esc(o.i)+'">'+(armed===o.i?'Confirmer la suppression ?':'Supprimer')+'</button>':(o.sent&&connected()?ownBtns(o.i):'');
   var lbl=o.n?'<b>'+esc(o.n)+'</b>'+(o.l?' · '+esc(o.l):''):(esc(o.l)||typeLabel(o.t));
+  /* bon d'une commande : nom, puis métrage × prix, puis note (comme dans la caisse) */
+  var sb='display:block;font-weight:400;font-size:.9rem;color:var(--ink-2)';
+  if(isV&&o.n&&o.oq){lbl='<b>'+esc(o.n)+'</b><span style="'+sb+'">'+nfq.format(o.oq)+(o.ou?' '+esc(o.ou):'')+' × '+fmt(o.opr)+' DH</span>'+(o.onote?'<span style="'+sb+'">'+esc(o.onote)+'</span>':'')}
+  else if(isV&&o.n&&o.l&&/×\s*\d/.test(o.l)){var lp=o.l.split(' · ');lbl='<b>'+esc(o.n)+'</b><span style="'+sb+'">'+esc(lp[0])+'</span>'+(lp.length>1?'<span style="'+sb+'">'+esc(lp.slice(1).join(' · '))+'</span>':'')}
   var tag=(o.m==='credit'?'<span class="tag credit">Crédit</span>':((o.m!=='especes'||isR)?'<span class="tag'+(isR?' rg':'')+'">'+MODES[o.m]+'</span>':''))+(o.p?'<span class="tag">'+esc(o.p)+'</span>':'')+(pvOf(o)?PV_TAG:'');
   return '<li class="op '+(isR?'reglement':(isV?'vente':'charge'))+'"><div><div class="lbl">'+lbl+'</div><div class="meta"><span>'+dLabel(o.d)+' · '+pad(t.getHours())+':'+pad(t.getMinutes())+' · '+typeLabel(o.t)+'</span>'+tag+act+'</div></div><div class="amt">'+(isV||isR?'+':'−')+fmt(o.c)+'</div></li>';
 }
