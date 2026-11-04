@@ -1028,9 +1028,11 @@ function openEdit(id){
   $('edAmount').value=(s.c/100).toFixed(2).replace(/\.00$/,'').replace('.',',');
   $('edMode').innerHTML=keys.map(function(k){return '<option value="'+k+'">'+(MODES[k]||k)+'</option>'}).join('');$('edMode').value=s.m;
   var cl=clientsSorted().slice();
-  if(s.k&&!cl.some(function(c){return c.id===s.k}))cl.push({id:s.k,name:s.n||'Client'});
-  $('edClient').innerHTML=cl.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>'}).join('');
-  if(s.k)$('edClient').value=s.k;
+  var ecid=s.k||'';
+  if(!ecid&&s.n){var ek=nameKey(s.n),ef=cl.find(function(c){return nameKey(c.name)===ek});ecid=ef?ef.id:clientId(s.n)}
+  if(ecid&&!cl.some(function(c){return c.id===ecid}))cl.push({id:ecid,name:s.n||'Client'});
+  $('edClient').innerHTML=(ecid?'':'<option value="">— Choisis le client —</option>')+cl.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>'}).join('');
+  $('edClient').value=ecid;
   var pl=productList().slice();if(s.p&&pl.indexOf(s.p)<0)pl.push(s.p);
   $('edProduct').innerHTML='<option value="">— Sans produit —</option>'+pl.map(function(x){return '<option value="'+esc(x)+'">'+esc(x)+'</option>'}).join('');
   $('edProduct').value=s.p||'';
@@ -1109,8 +1111,8 @@ function renderOrders(){
 var ordOpen={};
 /* lecteur code-barres USB : il « tape » le code très vite puis Entrée, quel que soit l'endroit où l'on est dans l'app */
 function orderByCode(code){
-  var k=String(code||'').trim().toLowerCase();if(k.length<4)return null;
-  return openOrders().filter(function(o){return o.id.toLowerCase()===k||o.id.slice(-6).toLowerCase()===k})[0]||null;
+  var fz=function(s){return String(s).toLowerCase().replace(/o/g,'0').replace(/[il]/g,'1')},k=String(code||'').trim().toLowerCase();if(k.length<4)return null;
+  return openOrders().filter(function(o){return o.id.toLowerCase()===k||fz(o.id.slice(-6))===fz(k)})[0]||null;
 }
 function onScan(code){
   var o=orderByCode(code);
