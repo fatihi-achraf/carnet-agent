@@ -575,7 +575,7 @@ function renderDay(){
   var v=data.view||{},ld=v.lastDay;
   $('dayLast').textContent=!f.fondKnown?'Le responsable doit d’abord fixer le fond de départ pour que tu puisses clôturer.':(ld?'Dernière clôture : '+dLabel(ld.date)+' à '+hhmm(ld.at)+' · retiré '+fmtS(ld.retire)+' DH'+(ld.by?' · '+(/^u_/.test(ld.by)?'Responsable':ld.by):''):'');
   if(!$('dayPanel').hidden){
-    $('dayStrip').innerHTML='<div><span>Dans le tiroir</span><b>'+fmt(f.total)+'</b></div><div><span>Fond à laisser</span><b>'+fmt(f.fond)+'</b></div><div><span>À retirer</span><b class="pos">'+fmtS(f.total-f.fond)+'</b></div>';
+    $('dayStrip').innerHTML='<div><span>Dans le tiroir</span><b'+(f.total<0?' style="color:var(--charge,#b93a22)"':'')+'>'+fmtS(f.total)+'</b></div><div><span>Fond à laisser</span><b>'+fmt(f.fond)+'</b></div><div><span>À retirer</span><b class="pos">'+fmtS(f.total-f.fond)+'</b></div>';
     var c=parseMoney($('dayCount').value);
     $('dayRes').textContent=c==null?'Compte l’argent du tiroir, écris le montant, puis retire-en '+fmtS(f.total-f.fond)+' DH pour ne laisser que le fond.':(c===f.total?'Caisse juste. Retire '+fmtS(c-f.fond)+' DH et laisse '+fmt(f.fond)+' DH.':(c<f.total?'Manque '+fmt(f.total-c)+' DH. ':'Surplus '+fmt(c-f.total)+' DH. ')+'Retire '+fmtS(c-f.fond)+' DH et laisse '+fmt(f.fond)+' DH.');
   }
@@ -800,11 +800,12 @@ function renderDrawer(){
   var f=drawerFigures();
   $('drawerState').textContent=syncing?'mise à jour…':(syncErr?'hors ligne · chiffres de '+(data.view?hhmm(data.view.got):'—'):(data.view?'à jour · '+hhmm(data.view.got):''));
   if(!f){$('drawerBig').innerHTML='—';$('drawerStrip').innerHTML='';$('drawerNote').textContent=syncing?'Chargement…':'Pas encore de chiffres. Connecte-toi à internet puis appuie sur « Actualiser la caisse ».';return}
-  $('drawerBig').innerHTML=fmt(f.total)+' <small>DH</small>';
+  $('drawerBig').innerHTML=fmtS(f.total)+' <small>DH</small>';$('drawerBig').style.color=f.total<0?'var(--charge,#b93a22)':'';
   $('drawerStrip').innerHTML='<div><span>Fond</span><b>'+(f.fondKnown?fmt(f.fond):'?')+'</b></div><div><span>Ventes esp.</span><b class="v">+'+fmt(f.v)+'</b></div><div><span>Règlements esp.</span><b class="pos">+'+fmt(f.r)+'</b></div><div><span>Charges esp.</span><b class="c">−'+fmt(f.c)+'</b></div>';
   var note='Argent que le tiroir doit contenir (semaine du '+dLabel(f.ws)+').';
   if(!f.fondKnown)note='Le fond de caisse n’est pas encore connu (la semaine précédente n’est pas clôturée) : ce total ne compte que les mouvements de la semaine, sans le fond.';
   if(f.n)note+=' Inclut '+f.n+' bon'+(f.n>1?'s':'')+' espèces pas encore envoyé'+(f.n>1?'s':'')+'.';
+  if(f.total<0)note='⚠ Le tiroir est en négatif : les charges en espèces dépassent l’argent disponible (il manque '+fmt(f.total)+' DH). Vérifie les bons. '+note;
   $('drawerNote').textContent=note;
 }
 function renderConn(){
